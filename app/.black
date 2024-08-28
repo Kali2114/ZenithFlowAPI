@@ -4,10 +4,10 @@ exclude = '''
 /(
     migrations
     | __pycache__
-    | manage.py
-    | config/wsgi.py
-    | config/asgi.py
-    | config/urls.py
-    | config/settings.py
-)/$
+    | .*manage\.py
+    | .*config/wsgi\.py
+    | .*config/asgi\.py
+    | .*config/urls\.py
+    | .*config/settings\.py
+)/.*
 '''
