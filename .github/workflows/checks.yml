@@ -16,6 +16,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: List files for debugging
+        run: docker compose run --rm app sh -c "ls -R /app"
+
       - name: Test
         run: docker compose run --rm app sh -c "python manage.py test"
 
