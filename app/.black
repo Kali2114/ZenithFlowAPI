@@ -1,8 +1,0 @@
-[tool.black]
-line-length = 88
-exclude = '''
-/app/config/|
-/app/manage.py|
-/migrations|
-/__pycache__|
-'''

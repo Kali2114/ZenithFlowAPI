@@ -1,0 +1,11 @@
+[tool.black]
+line-length = 88
+exclude = '''
+/config/wsgi.py|
+/config/asgi.py|
+/config/urls.py|
+/config/settings\.py|
+/manage\.py|
+/migrations|
+/__pycache__
+'''
