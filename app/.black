@@ -1,13 +1,5 @@
 [tool.black]
 line-length = 88
 exclude = '''
-/(
-    migrations
-    | __pycache__
-    | .*manage\.py
-    | .*config/wsgi\.py
-    | .*config/asgi\.py
-    | .*config/urls\.py
-    | .*config/settings\.py
-)/.*
+/(app/config/(wsgi|asgi|urls|settings)\.py|app/manage\.py|migrations|__pycache__)
 '''
