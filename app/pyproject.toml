@@ -4,6 +4,8 @@ exclude = '''
 /config/wsgi.py|
 /config/asgi.py|
 /config/urls.py|
+/config/__init__.py|
+/config/celery.py|
 /config/settings\.py|
 /manage\.py|
 /migrations|
