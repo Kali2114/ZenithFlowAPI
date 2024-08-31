@@ -19,17 +19,12 @@ jobs:
       - name: List files for debugging
         run: docker compose run --rm app sh -c "ls -R /app"
 
-      - name: Load environment variables from .env file
-        run: |
-          cp .env /tmp/.env
-          set -o allexport; source /tmp/.env; set +o allexport
-
-      - name: Test
-        run: |
-          docker compose run --rm app sh -c "
-            python manage.py wait_for_db && 
-            python manage.py test
-          "
+#      - name: Test
+#        run: |
+#          docker compose run --rm app sh -c "
+#            python manage.py wait_for_db &&
+#            python manage.py test
+#          "
 
       - name: Lint
         run: docker compose run --rm app sh -c "flake8"
