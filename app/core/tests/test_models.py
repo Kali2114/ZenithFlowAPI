@@ -13,9 +13,9 @@ class ModelTests(TestCase):
         """Test creating a user with email is successful."""
         email = "test@example.com"
         password = "Test123"
+        name = "Test_Name"
         user = get_user_model().objects.create_user(
-            email=email,
-            password=password,
+            email=email, password=password, name=name
         )
 
         self.assertEqual(user.email, email)
@@ -28,10 +28,11 @@ class ModelTests(TestCase):
             ["Test2@ExAmple.com", "Test2@example.com"],
             ["Test3@example.COM", "Test3@example.com"],
         ]
-        for email, expected in sample_emails:
+        for idx, (email, expected) in enumerate(sample_emails):
             user = get_user_model().objects.create_user(
                 email=email,
                 password="Test123",
+                name=f"User{idx}",
             )
             self.assertEqual(user.email, expected)
 
@@ -41,6 +42,16 @@ class ModelTests(TestCase):
             get_user_model().objects.create_user(
                 email="",
                 password="Test123",
+                name="Test_Name",
+            )
+
+    def test_new_user_without_name_raise_error(self):
+        """Test raises ValueError when creating user without email."""
+        with self.assertRaises(ValueError):
+            get_user_model().objects.create_user(
+                email="Test@example.com",
+                password="Test123",
+                name="",
             )
 
     def test_create_superuser(self):
@@ -48,6 +59,7 @@ class ModelTests(TestCase):
         user = get_user_model().objects.create_superuser(
             email="example@test.com",
             password="Test123",
+            name="Test_Name",
         )
 
         self.assertTrue(user.is_superuser)

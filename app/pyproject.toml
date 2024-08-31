@@ -1,5 +1,5 @@
 [tool.black]
-line-length = 88
+line-length = 79
 exclude = '''
 /config/wsgi.py|
 /config/asgi.py|
