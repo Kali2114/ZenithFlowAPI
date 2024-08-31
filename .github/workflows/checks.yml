@@ -13,14 +13,16 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Check environment variables
-        run: docker compose run --rm app sh -c "env"
-
       - name: Checkout
         uses: actions/checkout@v3
 
       - name: List files for debugging
         run: docker compose run --rm app sh -c "ls -R /app"
+
+      - name: Load environment variables from .env file
+        run: |
+          cp .env /tmp/.env
+          set -o allexport; source /tmp/.env; set +o allexport
 
       - name: Test
         run: |
