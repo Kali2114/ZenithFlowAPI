@@ -2,13 +2,18 @@
 User models.
 """
 
-from django.db import models
+from django.db import (
+    models,
+    transaction,
+)
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
     PermissionsMixin,
 )
 from django.utils import timezone
+
+from core import constants
 
 
 class UserManager(BaseUserManager):
@@ -50,3 +55,41 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = "email"
+
+
+class MeditationSession(models.Model):
+    """Model for meditation session object."""
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField()
+    instructor = models.ForeignKey('User', on_delete=models.CASCADE)
+    duration = models.PositiveIntegerField()
+    start_time = models.DateTimeField()
+    status = models.CharField(max_length=20, choices=constants.MEDITATION_SESSION_CHOICES, default='ongoing')
+    max_participants = models.PositiveIntegerField(default=20)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    #TODO Many to many with techniques.
+
+    def __str__(self):
+        return f'{self.name} by {self.instructor}'
+
+    @classmethod
+    def create(cls, name, instructor, duration, start_time, **kwargs):
+        with transaction.atomic():
+            existing_session = cls.objects.filter(name__startswith=name)
+            count = existing_session.count()
+
+            if count == 0:
+                full_name = f'{name} #1'
+            else:
+                full_name = f'{name} #{count + 1}'
+
+            session = cls(
+                name=full_name,
+                instructor=instructor,
+                duration=duration,
+                start_time=start_time,
+                **kwargs
+            )
+            session.save()
+            return session
