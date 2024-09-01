@@ -23,10 +23,10 @@ def create_user(**params):
 
 def create_meditation_session(**params):
     meditation_session = {
-        'name':  "Mindful Morning",
-        'description': "Test description",
-        'duration': 40,
-        'start_time': timezone.now(),
+        "name": "Mindful Morning",
+        "description": "Test description",
+        "duration": 40,
+        "start_time": timezone.now(),
     }
     meditation_session.update(**params)
     return models.MeditationSession.create(**meditation_session)
@@ -40,10 +40,7 @@ class ModelTests(TestCase):
         email = "test@example.com"
         password = "Test123"
 
-        user = create_user(
-            email=email,
-            password=password
-        )
+        user = create_user(email=email, password=password)
 
         self.assertEqual(user.email, email)
         self.assertTrue(user.check_password(password))
@@ -91,16 +88,17 @@ class ModelTests(TestCase):
 
         self.assertEqual(
             str(meditation_session),
-            f"{meditation_session.name} " f"by {meditation_session.instructor}",
+            f"{meditation_session.name} "
+            f"by {meditation_session.instructor}",
         )
 
     def test_meditation_session_name_numbering(self):
         """Test that meditation session names are correctly numbered."""
-        instructor = create_user(email='test1@example.com', name='Test1')
+        instructor = create_user(email="test1@example.com", name="Test1")
         session1 = create_meditation_session(instructor=instructor)
         session2 = create_meditation_session(instructor=instructor)
         session3 = create_meditation_session(instructor=instructor)
 
-        self.assertEqual(session1.name, 'Mindful Morning #1')
-        self.assertEqual(session2.name, 'Mindful Morning #2')
-        self.assertEqual(session3.name, 'Mindful Morning #3')
+        self.assertEqual(session1.name, "Mindful Morning #1")
+        self.assertEqual(session2.name, "Mindful Morning #2")
+        self.assertEqual(session3.name, "Mindful Morning #3")
