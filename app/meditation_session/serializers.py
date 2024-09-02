@@ -14,3 +14,18 @@ class MeditationSessionSerializer(serializers.ModelSerializer):
         model = MeditationSession
         fields = ["id", "name", "start_time"]
         read_only_fields = ["id"]
+
+
+class MeditationSessionDetailSerializer(serializers.ModelSerializer):
+    """Serializer for meditation session detail view."""
+
+    class Meta(MeditationSessionSerializer.Meta):
+        fields = MeditationSessionSerializer.Meta.fields + [
+            'instructor',
+            'description',
+            'duration',
+            'status',
+            'max_participants',
+            'created_at'
+        ]
+        read_only_fields = MeditationSessionSerializer.Meta.read_only_fields + ['instructor']
