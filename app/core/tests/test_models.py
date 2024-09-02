@@ -21,6 +21,18 @@ def create_user(**params):
     return get_user_model().objects.create_user(**default_user)
 
 
+def create_instructor(**params):
+    """Create and return a new instructor."""
+    default_user = {
+        "email": "instructor@example.com",
+        "password": "testpass123",
+        "name": "Instructor",
+    }
+    default_user.update(params)
+
+    return get_user_model().objects.create_superuser(**default_user)
+
+
 def create_meditation_session(**params):
     meditation_session = {
         "name": "Mindful Morning",
@@ -102,3 +114,17 @@ class ModelTests(TestCase):
         self.assertEqual(session1.name, "Mindful Morning #1")
         self.assertEqual(session2.name, "Mindful Morning #2")
         self.assertEqual(session3.name, "Mindful Morning #3")
+
+    def test_create_enrollment(self):
+        """Test a creating enrollment successful."""
+        user = create_user()
+        instructor = create_instructor()
+        meditation_session = create_meditation_session(instructor=instructor)
+        enrollment = models.Enrollment.objects.create(
+            user=user,
+            session=meditation_session,
+        )
+
+        self.assertEqual(
+            str(enrollment), f"User: {user} enrolled in {meditation_session}"
+        )

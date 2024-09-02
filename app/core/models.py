@@ -98,3 +98,20 @@ class MeditationSession(models.Model):
             )
             session.save()
             return session
+
+
+class Enrollment(models.Model):
+    """Model representing a user's enrollment in a meditation session."""
+
+    user = models.ForeignKey(
+        "User", on_delete=models.CASCADE, related_name="enrollments"
+    )
+    session = models.ForeignKey(
+        "MeditationSession",
+        on_delete=models.CASCADE,
+        related_name="enrollments",
+    )
+    enrolled_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"User: {self.user} enrolled in {self.session}"
