@@ -19,7 +19,7 @@ class MeditationSessionViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         """Return the serializer class for request."""
-        if self.action == 'list':
+        if self.action == "list":
             return serializers.MeditationSessionSerializer
 
         return self.serializer_class
@@ -35,16 +35,22 @@ class MeditationSessionViewSet(viewsets.ModelViewSet):
         """Update a meditation session only by its creator."""
         instance = self.get_object()
         if instance.instructor != self.request.user:
-            raise PermissionDenied('You do not have permission to edit this session')
+            raise PermissionDenied(
+                "You do not have permission to edit this session"
+            )
 
-        if 'instructor' in serializer.validated_data:
-            raise PermissionDenied('You cannot change the instructor of the session')
+        if "instructor" in serializer.validated_data:
+            raise PermissionDenied(
+                "You cannot change the instructor of the session"
+            )
 
         serializer.save()
 
     def perform_destroy(self, instance):
         """Delete a meditation session only by its creator."""
         if instance.instructor != self.request.user:
-            raise PermissionDenied('You do not have permission to delete this session')
+            raise PermissionDenied(
+                "You do not have permission to delete this session"
+            )
 
         instance.delete()

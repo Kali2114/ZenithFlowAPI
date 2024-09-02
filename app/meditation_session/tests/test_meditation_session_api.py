@@ -22,8 +22,8 @@ MEDITATION_SESSION_URL = reverse("meditation_session:meditationsession-list")
 
 def detail_url(meditation_session_id):
     return reverse(
-        'meditation_session:meditationsession-detail',
-        args = [meditation_session_id]
+        "meditation_session:meditationsession-detail",
+        args=[meditation_session_id],
     )
 
 
@@ -101,7 +101,9 @@ class PrivateMeditationSessionApiTests(TestCase):
 
     def test_get_meditation_session_detail(self):
         """Test get meditation session detail."""
-        meditation_session = create_meditation_session(instructor=self.instructor)
+        meditation_session = create_meditation_session(
+            instructor=self.instructor
+        )
         url = detail_url(meditation_session.id)
         res = self.client.get(url)
         serializer = MeditationSessionDetailSerializer(meditation_session)
@@ -124,10 +126,12 @@ class PrivateMeditationSessionApiTests(TestCase):
 
     def test_partial_update_meditation_session_by_user_failed(self):
         """Test partial update a meditation session by user failed."""
-        meditation_session = create_meditation_session(instructor=self.instructor)
+        meditation_session = create_meditation_session(
+            instructor=self.instructor
+        )
         payload = {
-            'name': 'Updated name',
-            'duration': 120,
+            "name": "Updated name",
+            "duration": 120,
         }
         url = detail_url(meditation_session.id)
         res = self.client.patch(url, payload)
@@ -136,13 +140,15 @@ class PrivateMeditationSessionApiTests(TestCase):
 
     def test_full_update_meditation_session_by_user_failed(self):
         """Test full update a meditation session by user failed."""
-        meditation_session = create_meditation_session(instructor=self.instructor)
+        meditation_session = create_meditation_session(
+            instructor=self.instructor
+        )
         payload = {
-            'name': 'Updated name',
-            'description': 'Updated Description',
-            'duration': 120,
-            'status': 'planned',
-            'max_participants': 100,
+            "name": "Updated name",
+            "description": "Updated Description",
+            "duration": 120,
+            "status": "planned",
+            "max_participants": 100,
             "start_time": timezone.now(),
         }
         url = detail_url(meditation_session.id)
@@ -153,11 +159,13 @@ class PrivateMeditationSessionApiTests(TestCase):
     def test_update_meditation_session_instructor_by_user_failed(self):
         """Test update a meditation session instructor by user if failed."""
         another_instructor = create_instructor(
-            email='another_instructor@example.com',
-            name='Another Instructor',
+            email="another_instructor@example.com",
+            name="Another Instructor",
         )
-        meditation_session = create_meditation_session(instructor=self.instructor)
-        payload = {'instructor': another_instructor}
+        meditation_session = create_meditation_session(
+            instructor=self.instructor
+        )
+        payload = {"instructor": another_instructor}
         url = detail_url(meditation_session.id)
         res = self.client.patch(url, payload)
 
@@ -166,7 +174,9 @@ class PrivateMeditationSessionApiTests(TestCase):
 
     def test_delete_meditation_session_by_user_failed(self):
         """Test delete a meditation session by user is failed."""
-        meditation_session = create_meditation_session(instructor=self.instructor)
+        meditation_session = create_meditation_session(
+            instructor=self.instructor
+        )
         url = detail_url(meditation_session.id)
         res = self.client.delete(url)
 
@@ -185,7 +195,6 @@ class InstructorMeditationSessionApiTests(TestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=self.instructor)
 
-
     def test_create_meditation_session_by_instructor_successful(self):
         """Test creating a meditation session by instructor is successful."""
         payload = {
@@ -197,37 +206,43 @@ class InstructorMeditationSessionApiTests(TestCase):
         res = self.client.post(MEDITATION_SESSION_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        meditation_session = MeditationSession.objects.get(id=res.data['id'])
+        meditation_session = MeditationSession.objects.get(id=res.data["id"])
         for k, v in payload.items():
             self.assertEqual(getattr(meditation_session, k), v)
         self.assertEqual(meditation_session.instructor, self.instructor)
 
     def test_partial_update_own_meditation_session_successful(self):
-        """Test partial update of own meditation session by instructor is successful."""
-        meditation_session = create_meditation_session(instructor=self.instructor)
+        """Test partial update of own meditation session by
+        instructor is successful."""
+        meditation_session = create_meditation_session(
+            instructor=self.instructor
+        )
         payload = {
-            'name': 'Updated name',
-            'duration': 120,
+            "name": "Updated name",
+            "duration": 120,
         }
         url = detail_url(meditation_session.id)
         res = self.client.patch(url, payload)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         meditation_session.refresh_from_db()
-        self.assertEqual(meditation_session.name, payload['name'])
-        self.assertEqual(meditation_session.duration, payload['duration'])
+        self.assertEqual(meditation_session.name, payload["name"])
+        self.assertEqual(meditation_session.duration, payload["duration"])
         self.assertEqual(meditation_session.instructor, self.instructor)
 
     def test_partial_update_other_instructors_session_failed(self):
-        """Test partial update of another instructor's meditation session failed."""
+        """Test partial update of another instructor's
+        meditation session failed."""
         another_instructor = create_instructor(
-            email='another_instructor@example.com',
-            name='anothe_instructor',
+            email="another_instructor@example.com",
+            name="anothe_instructor",
         )
-        meditation_session = create_meditation_session(instructor=another_instructor)
+        meditation_session = create_meditation_session(
+            instructor=another_instructor
+        )
         payload = {
-            'name': 'Updated name',
-            'duration': 120,
+            "name": "Updated name",
+            "duration": 120,
         }
         url = detail_url(meditation_session.id)
         res = self.client.patch(url, payload)
@@ -236,13 +251,15 @@ class InstructorMeditationSessionApiTests(TestCase):
 
     def test_full_update_own_meditation_session_successful(self):
         """Test full update of own meditation session is successful."""
-        meditation_session = create_meditation_session(instructor=self.instructor)
+        meditation_session = create_meditation_session(
+            instructor=self.instructor
+        )
         payload = {
-            'name': 'Updated name',
-            'description': 'Updated Description',
-            'duration': 120,
-            'status': 'planned',
-            'max_participants': 100,
+            "name": "Updated name",
+            "description": "Updated Description",
+            "duration": 120,
+            "status": "planned",
+            "max_participants": 100,
             "start_time": timezone.now(),
         }
         url = detail_url(meditation_session.id)
@@ -257,16 +274,18 @@ class InstructorMeditationSessionApiTests(TestCase):
     def test_full_update_other_instructor_meditation_session_failed(self):
         """Test full update other instructor meditation session is failed."""
         another_instructor = create_instructor(
-            email='another_instructor@example.com',
-            name='another_instructor',
+            email="another_instructor@example.com",
+            name="another_instructor",
         )
-        meditation_session = create_meditation_session(instructor=another_instructor)
+        meditation_session = create_meditation_session(
+            instructor=another_instructor
+        )
         payload = {
-            'name': 'Updated name',
-            'description': 'Updated Description',
-            'duration': 120,
-            'status': 'planned',
-            'max_participants': 100,
+            "name": "Updated name",
+            "description": "Updated Description",
+            "duration": 120,
+            "status": "planned",
+            "max_participants": 100,
             "start_time": timezone.now(),
         }
         url = detail_url(meditation_session.id)
@@ -277,19 +296,23 @@ class InstructorMeditationSessionApiTests(TestCase):
     def test_update_meditation_session_instructor_failed(self):
         """Test update meditation session instructor failed."""
         another_instructor = create_instructor(
-            email='another_instructor@example.com',
-            name='Another Instructor',
+            email="another_instructor@example.com",
+            name="Another Instructor",
         )
-        meditation_session = create_meditation_session(instructor=self.instructor)
-        payload = {'instructor': another_instructor.id}
+        meditation_session = create_meditation_session(
+            instructor=self.instructor
+        )
+        payload = {"instructor": another_instructor.id}
         url = detail_url(meditation_session.id)
-        res = self.client.patch(url, payload)
+        self.client.patch(url, payload)
 
         self.assertEqual(meditation_session.instructor, self.instructor)
 
     def test_delete_own_meditation_session_successful(self):
         """Test delete of own meditation session is successful."""
-        meditation_session = create_meditation_session(instructor=self.instructor)
+        meditation_session = create_meditation_session(
+            instructor=self.instructor
+        )
         url = detail_url(meditation_session.id)
         res = self.client.delete(url)
 
@@ -302,10 +325,12 @@ class InstructorMeditationSessionApiTests(TestCase):
     def test_delete_other_instructor_meditation_session_failed(self):
         """Test delete other instructor meditation session failed."""
         another_instructor = create_instructor(
-            email='another_instructor@example.com',
-            name='another_instructor',
+            email="another_instructor@example.com",
+            name="another_instructor",
         )
-        meditation_session = create_meditation_session(instructor=another_instructor)
+        meditation_session = create_meditation_session(
+            instructor=another_instructor
+        )
         url = detail_url(meditation_session.id)
         res = self.client.delete(url)
 
