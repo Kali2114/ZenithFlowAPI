@@ -113,5 +113,12 @@ class Enrollment(models.Model):
     )
     enrolled_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "session"], name="unique_user_session"
+            )
+        ]
+
     def __str__(self):
         return f"User: {self.user} enrolled in {self.session}"
