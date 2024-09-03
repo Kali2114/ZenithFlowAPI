@@ -16,7 +16,7 @@ from meditation_session.serializers import (
 )
 
 
-ENROLMENT_URL = reverse("meditation_session:enrollment-list")
+ENROLLMENT_URL = reverse("meditation_session:enrollment-list")
 
 
 def detail_url(enrollment_id):
@@ -68,7 +68,7 @@ class PublicEnrollmentApiTests(TestCase):
 
     def test_auth_required(self):
         """Test auth is required to retrieving enrollments."""
-        res = self.client.get(ENROLMENT_URL)
+        res = self.client.get(ENROLLMENT_URL)
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
@@ -80,13 +80,13 @@ class PrivateEnrollmentApiTests(TestCase):
         self.user = create_user()
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
+        self.instructor = create_instructor()
+        self.session = create_meditation_session(instructor=self.instructor)
 
     def test_retrieve_enrollments(self):
         """Test retrieving a list of enrollments."""
-        instructor = create_instructor()
-        session = create_meditation_session(instructor=instructor)
-        Enrollment.objects.create(user=self.user, session=session)
-        res = self.client.get(ENROLMENT_URL)
+        Enrollment.objects.create(user=self.user, session=self.session)
+        res = self.client.get(ENROLLMENT_URL)
 
         enrollment = Enrollment.objects.all()
         serializer = EnrollmentSerializer(enrollment, many=True)
@@ -95,12 +95,11 @@ class PrivateEnrollmentApiTests(TestCase):
 
     def test_retrieve_enrollments_listing_to_user(self):
         """Test retrieving a list of enrollments listing to user."""
-        instructor = create_instructor()
         session1 = create_meditation_session(
-            name="Morning Meditation", instructor=instructor
+            name="Morning Meditation", instructor=self.instructor
         )
         session2 = create_meditation_session(
-            name="Evening Meditation", instructor=instructor
+            name="Evening Meditation", instructor=self.instructor
         )
         Enrollment.objects.create(user=self.user, session=session1)
         Enrollment.objects.create(user=self.user, session=session2)
@@ -110,11 +109,11 @@ class PrivateEnrollmentApiTests(TestCase):
             name="other_user",
         )
         session3 = create_meditation_session(
-            name="Afternoon", instructor=instructor
+            name="Afternoon", instructor=self.instructor
         )
         Enrollment.objects.create(user=other_user, session=session3)
 
-        res = self.client.get(ENROLMENT_URL)
+        res = self.client.get(ENROLLMENT_URL)
         enrollments = Enrollment.objects.filter(user=self.user).order_by(
             "-enrolled_at"
         )
@@ -126,14 +125,89 @@ class PrivateEnrollmentApiTests(TestCase):
 
     def test_get_enrollment_detail(self):
         """Test get enrollment detail."""
-        instructor = create_instructor()
-        session = create_meditation_session(
-            name="Morning Meditation", instructor=instructor
+        enrollment = Enrollment.objects.create(
+            user=self.user, session=self.session
         )
-        enrollment = Enrollment.objects.create(user=self.user, session=session)
         url = detail_url(enrollment.id)
         res = self.client.get(url)
         serializer = EnrollmentDetailSerializer(enrollment)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serializer.data)
+
+    def test_create_enrollment(self):
+        """Test creating an enrollment by user."""
+        payload = {"session": self.session.id}
+        res = self.client.post(ENROLLMENT_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        enrollment = Enrollment.objects.get(id=res.data["id"])
+        self.assertEqual(self.user, enrollment.user)
+        self.assertEqual(enrollment.session, self.session)
+
+    def test_create_enrollment_full_session_fails(self):
+        """Test creating enrollment when meditation session is full fails."""
+        other_user = create_user(email="other@example.com", name="Other")
+        session = create_meditation_session(
+            instructor=self.instructor, max_participants=1
+        )
+        Enrollment.objects.create(user=other_user, session=session)
+        payload = {"session": session.id}
+        res = self.client.post(ENROLLMENT_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(session.enrollments.count(), 1)
+
+    def test_create_duplicate_enrollment_fails(self):
+        """Test creating a duplicate enrollment fails."""
+        Enrollment.objects.create(user=self.user, session=self.session)
+        payload = {"session": self.session.id}
+        res = self.client.post(ENROLLMENT_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_update_enrollment_not_allowed(self):
+        """Test updating an enrollment is not allowed."""
+        enrollment = Enrollment.objects.create(
+            user=self.user, session=self.session
+        )
+        session2 = create_meditation_session(
+            name="Afternoon Meditation", instructor=self.instructor
+        )
+        user2 = create_user(name="User2", email="user2@example.com")
+        payload = {"session": session2.id, "user": user2}
+        url = detail_url(enrollment.id)
+        res = self.client.patch(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(enrollment.session, self.session)
+        self.assertEqual(enrollment.user, self.user)
+
+    def test_delete_enrollment(self):
+        """Test deleting an enrollment successful."""
+        enrollment = Enrollment.objects.create(
+            user=self.user, session=self.session
+        )
+        url = detail_url(enrollment.id)
+        res = self.client.delete(url)
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        enrollment_exists = Enrollment.objects.filter(
+            id=enrollment.id
+        ).exists()
+        self.assertFalse(enrollment_exists)
+
+    def test_delete_another_user_enrollment_fails(self):
+        """Test deleting other user enrollment fails."""
+        other_user = create_user(name="other user", email="other@example.com")
+        enrollment = Enrollment.objects.create(
+            user=other_user, session=self.session
+        )
+        url = detail_url(enrollment.id)
+        res = self.client.delete(url)
+
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+        enrollment_exists = Enrollment.objects.filter(
+            id=enrollment.id
+        ).exists()
+        self.assertTrue(enrollment_exists)

@@ -99,6 +99,9 @@ class MeditationSession(models.Model):
             session.save()
             return session
 
+    def current_participants(self):
+        return Enrollment.objects.filter(session=self).count()
+
 
 class Enrollment(models.Model):
     """Model representing a user's enrollment in a meditation session."""

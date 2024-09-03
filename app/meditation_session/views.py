@@ -2,9 +2,11 @@
 Views for the meditation session APIs.
 """
 
+from django.db import IntegrityError
+
 from rest_framework import viewsets, mixins
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
 
 from core.models import MeditationSession, Enrollment
@@ -52,7 +54,7 @@ class MeditationSessionViewSet(viewsets.ModelViewSet):
         """Delete a meditation session only by its creator."""
         if instance.instructor != self.request.user:
             raise PermissionDenied(
-                "You do not have permission to delete this session"
+                "You do not have permission to delete this session."
             )
 
         instance.delete()
@@ -62,6 +64,7 @@ class EnrollmentViewSet(
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
     mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
     """Manage enrollments in the database."""
@@ -86,4 +89,10 @@ class EnrollmentViewSet(
 
     def perform_create(self, serializer):
         """Create a new enrollment."""
-        serializer.save(user=self.request.user)
+        session = MeditationSession.objects.get(
+            id=self.request.data.get("session")
+        )
+        try:
+            serializer.save(user=self.request.user, session=session)
+        except IntegrityError:
+            raise ValidationError("You are already enrolled in this session.")
