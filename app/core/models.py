@@ -72,8 +72,7 @@ class MeditationSession(models.Model):
     )
     max_participants = models.PositiveIntegerField(default=20)
     created_at = models.DateTimeField(auto_now_add=True)
-    techniques = models.ManyToManyField('Technique', related_name='sessions')
-
+    techniques = models.ManyToManyField("Technique", related_name="sessions")
 
     def __str__(self):
         return f"{self.name} by {self.instructor}"

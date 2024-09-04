@@ -27,7 +27,7 @@ jobs:
 #          "
 
       - name: Format Check
-        run: docker compose run --rm app sh -c "black ."
+        run: docker compose run --rm app sh -c "black --check ."
 
       - name: Lint
         run: docker compose run --rm app sh -c "flake8"

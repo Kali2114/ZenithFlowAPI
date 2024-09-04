@@ -132,10 +132,7 @@ class ModelTests(TestCase):
     def test_create_technique(self):
         """Test a creating technique successful."""
         technique = models.Technique.objects.create(
-            name='Test Name',
-            description='Test description'
+            name="Test Name", description="Test description"
         )
 
-        self.assertEqual(
-            str(technique), f'{technique.name}'
-        )
+        self.assertEqual(str(technique), f"{technique.name}")
