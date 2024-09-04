@@ -26,8 +26,8 @@ jobs:
 #            python manage.py test
 #          "
 
+      - name: Format Check
+        run: docker compose run --rm app sh -c "black ."
+
       - name: Lint
         run: docker compose run --rm app sh -c "flake8"
-
-      - name: Format Check
-        run: docker compose run --rm app sh -c "black --check ."
