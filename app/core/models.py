@@ -72,8 +72,8 @@ class MeditationSession(models.Model):
     )
     max_participants = models.PositiveIntegerField(default=20)
     created_at = models.DateTimeField(auto_now_add=True)
+    techniques = models.ManyToManyField('Technique', related_name='sessions')
 
-    # TODO Many to many with techniques.
 
     def __str__(self):
         return f"{self.name} by {self.instructor}"
@@ -125,3 +125,13 @@ class Enrollment(models.Model):
 
     def __str__(self):
         return f"User: {self.user} enrolled in {self.session}"
+
+
+class Technique(models.Model):
+    """Model for technique object."""
+
+    name = models.CharField(max_length=50, unique=True)
+    description = models.TextField()
+
+    def __str__(self):
+        return self.name
