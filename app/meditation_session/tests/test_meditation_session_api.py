@@ -21,6 +21,7 @@ MEDITATION_SESSION_URL = reverse("meditation_session:meditationsession-list")
 
 
 def detail_url(meditation_session_id):
+    """Get a detail url for meditation session."""
     return reverse(
         "meditation_session:meditationsession-detail",
         args=[meditation_session_id],

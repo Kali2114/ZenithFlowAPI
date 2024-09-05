@@ -15,6 +15,7 @@ from meditation_session import views
 router = DefaultRouter()
 router.register("meditation_sessions", views.MeditationSessionViewSet)
 router.register("enrollments", views.EnrollmentViewSet)
+router.register("techniques", views.TechniqueViewSet)
 
 app_name = "meditation_session"
 

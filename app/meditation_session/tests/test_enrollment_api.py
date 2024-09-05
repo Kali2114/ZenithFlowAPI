@@ -20,6 +20,7 @@ ENROLLMENT_URL = reverse("meditation_session:enrollment-list")
 
 
 def detail_url(enrollment_id):
+    """Get a detail url for enrollment."""
     return reverse(
         "meditation_session:enrollment-detail", args=[enrollment_id]
     )
@@ -50,6 +51,7 @@ def create_user(**params):
 
 
 def create_meditation_session(**params):
+    """Create and return a meditation session."""
     meditation_session = {
         "name": "Mindful Morning",
         "description": "Test description",

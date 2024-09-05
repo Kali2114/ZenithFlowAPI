@@ -4,7 +4,11 @@ Serializers for meditation session APIs.
 
 from rest_framework import serializers
 
-from core.models import MeditationSession, Enrollment
+from core.models import (
+    MeditationSession,
+    Enrollment,
+    Technique,
+)
 from rest_framework.exceptions import ValidationError
 
 
@@ -62,3 +66,12 @@ class EnrollmentDetailSerializer(serializers.ModelSerializer):
             raise ValidationError("Sorry, this session is fully booked.")
 
         return attrs
+
+
+class TechniqueSerializer(serializers.ModelSerializer):
+    """Serializer for techniques."""
+
+    class Meta:
+        model = Technique
+        fields = ["id", "name", "description"]
+        read_only_fields = ["id"]

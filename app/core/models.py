@@ -131,6 +131,9 @@ class Technique(models.Model):
 
     name = models.CharField(max_length=50, unique=True)
     description = models.TextField()
+    instructor = models.ForeignKey(
+        "User", on_delete=models.CASCADE, related_name="techniques"
+    )
 
     def __str__(self):
         return self.name
