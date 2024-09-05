@@ -131,8 +131,11 @@ class ModelTests(TestCase):
 
     def test_create_technique(self):
         """Test a creating technique successful."""
+        user = get_user_model().objects.create_user(
+            email="test@example.com", password="Test123", name="Testname"
+        )
         technique = models.Technique.objects.create(
-            name="Test Name", description="Test description"
+            name="Test Name", description="Test description", instructor=user
         )
 
         self.assertEqual(str(technique), f"{technique.name}")

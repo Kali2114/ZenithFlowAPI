@@ -10,7 +10,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import MeditationSession
+from core.models import MeditationSession, Technique
 from meditation_session.serializers import (
     MeditationSessionSerializer,
     MeditationSessionDetailSerializer,
@@ -61,6 +61,23 @@ def create_meditation_session(**params):
     }
     meditation_session.update(**params)
     return MeditationSession.create(**meditation_session)
+
+
+def add_technique_to_session_url(session_id):
+    """Generate URL for adding a technique to a session."""
+    return reverse(
+        "meditation_session:meditationsession-add-technique", args=[session_id]
+    )
+
+
+def create_technique(**params):
+    """Create and return a new technique"""
+    default_technique = {
+        "name": "Breathing Technique",
+        "description": "Arrrgh",
+    }
+    default_technique.update(**params)
+    return Technique.objects.create(**default_technique)
 
 
 class PublicMeditationSessionApiTests(TestCase):
@@ -186,6 +203,19 @@ class PrivateMeditationSessionApiTests(TestCase):
             id=meditation_session.id
         ).exists()
         self.assertTrue(meditation_session_exists)
+
+    def test_user_cannot_add_technique_to_meditation_session(self):
+        """Test that a regular user cannot add a
+        technique to a meditation session."""
+        meditation_session = create_meditation_session(
+            instructor=self.instructor
+        )
+        technique = create_technique(instructor=self.instructor)
+        url = add_technique_to_session_url(session_id=meditation_session.id)
+        payload = {"technique_name": technique.name}
+        res = self.client.post(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
 
 class InstructorMeditationSessionApiTests(TestCase):
@@ -340,3 +370,58 @@ class InstructorMeditationSessionApiTests(TestCase):
             id=meditation_session.id
         ).exists()
         self.assertTrue(meditation_session_exists)
+
+    def test_add_technique_to_own_meditation_session_success(self):
+        """Test adding a new technique to own meditation session success."""
+        session = create_meditation_session(instructor=self.instructor)
+        technique = create_technique(instructor=self.instructor)
+        url = add_technique_to_session_url(session_id=session.id)
+        payload = {"technique_name": technique.name}
+        res = self.client.post(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        session.refresh_from_db()
+        self.assertIn(technique, session.techniques.all())
+
+    def test_add_other_instructor_technique_to_session_success(self):
+        """Test adding a technique created by
+        another instructor to own session is successful."""
+        other_instructor = create_instructor(
+            email="other_instructor@example.com", name="other_instructor"
+        )
+        technique = create_technique(instructor=other_instructor)
+        session = create_meditation_session(instructor=self.instructor)
+
+        url = add_technique_to_session_url(session_id=session.id)
+        payload = {"technique_name": technique.name}
+        res = self.client.post(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        session.refresh_from_db()
+        self.assertIn(technique, session.techniques.all())
+
+    def test_add_technique_to_another_instructors_session_failed(self):
+        """Test that adding a technique
+         to another instructor's session fails."""
+        other_instructor = create_instructor(
+            email="other_instructor@example.com", name="other_insructor"
+        )
+        session = create_meditation_session(instructor=other_instructor)
+        technique = create_technique(instructor=self.instructor)
+        url = add_technique_to_session_url(session_id=session.id)
+        payload = {"technique_name": technique.name}
+        res = self.client.post(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_add_non_existent_technique_to_session_failed(self):
+        """Test adding a non-existent technique to a session fails."""
+        session = create_meditation_session(instructor=self.instructor)
+
+        url = add_technique_to_session_url(session_id=session.id)
+        payload = {"technique_name": ""}  # Empty or non-existent technique
+        res = self.client.post(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("detail", res.data)
+        self.assertEqual(res.data["detail"], "Technique not found.")

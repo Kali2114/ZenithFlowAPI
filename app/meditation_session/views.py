@@ -4,9 +4,10 @@ Views for the meditation session APIs.
 
 from django.db import IntegrityError
 
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins, status
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.exceptions import ValidationError
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError, PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 
 from core import models
@@ -15,6 +16,7 @@ from meditation_session.utils import (
     check_user_is_instructor,
     check_user_is_creator,
 )
+from rest_framework.response import Response
 
 
 class MeditationSessionViewSet(viewsets.ModelViewSet):
@@ -54,6 +56,33 @@ class MeditationSessionViewSet(viewsets.ModelViewSet):
         check_user_is_creator(self.request.user, instance)
 
         instance.delete()
+
+    @action(detail=True, methods=["post"], url_path="add-technique")
+    def add_technique(self, request, pk=None):
+        """Allow creator of the session to add a technique by name."""
+        session = self.get_object()
+
+        if session.instructor != request.user:
+            raise PermissionDenied(
+                "Only the creator of the session can add techniques."
+            )
+
+        technique_name = request.data.get("technique_name")
+
+        try:
+            technique = models.Technique.objects.get(name=technique_name)
+        except models.Technique.DoesNotExist:
+            return Response(
+                {"detail": "Technique not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        session.techniques.add(technique)
+
+        return Response(
+            {"detail": "Technique added to session."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class EnrollmentViewSet(
