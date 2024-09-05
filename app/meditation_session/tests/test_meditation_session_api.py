@@ -402,7 +402,7 @@ class InstructorMeditationSessionApiTests(TestCase):
 
     def test_add_technique_to_another_instructors_session_failed(self):
         """Test that adding a technique
-         to another instructor's session fails."""
+        to another instructor's session fails."""
         other_instructor = create_instructor(
             email="other_instructor@example.com", name="other_insructor"
         )
