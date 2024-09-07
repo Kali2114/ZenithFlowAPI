@@ -23,7 +23,12 @@ class MeditationSessionViewSet(viewsets.ModelViewSet):
     """Manage meditation sessions in the database."""
 
     serializer_class = serializers.MeditationSessionDetailSerializer
-    queryset = models.MeditationSession.objects.all().order_by("-id")
+    queryset = (
+        models.MeditationSession.objects.all()
+        .select_related("instructor")
+        .prefetch_related("techniques", "enrollments__user")
+        .order_by("-id")
+    )
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
@@ -95,7 +100,11 @@ class EnrollmentViewSet(
     """Manage enrollments in the database."""
 
     serializer_class = serializers.EnrollmentDetailSerializer
-    queryset = models.Enrollment.objects.all()
+    queryset = (
+        models.Enrollment.objects.all()
+        .select_related("user", "session__instructor")
+        .prefetch_related("session__techniques")
+    )
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
@@ -127,7 +136,12 @@ class TechniqueViewSet(viewsets.ModelViewSet):
     """Manage techniques in the database."""
 
     serializer_class = serializers.TechniqueSerializer
-    queryset = models.Technique.objects.all().order_by("-name")
+    queryset = (
+        models.Technique.objects.all()
+        .select_related("instructor")
+        .prefetch_related("sessions")
+        .order_by("-name")
+    )
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
@@ -168,6 +182,10 @@ class CalendarView(mixins.ListModelMixin, viewsets.GenericViewSet):
         specific_date = query_serializer.validated_data.get("date")
 
         queryset = models.MeditationSession.objects.all()
+        queryset = queryset.select_related("instructor").prefetch_related(
+            "techniques", "enrollments__user"
+        )
+
         if start_date and end_date:
             queryset = queryset.filter(
                 start_time__date__gte=start_date,
