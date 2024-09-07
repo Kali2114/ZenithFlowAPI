@@ -16,6 +16,7 @@ router = DefaultRouter()
 router.register("meditation_sessions", views.MeditationSessionViewSet)
 router.register("enrollments", views.EnrollmentViewSet)
 router.register("techniques", views.TechniqueViewSet)
+router.register("calendar", views.CalendarView, basename="calendar")
 
 app_name = "meditation_session"
 

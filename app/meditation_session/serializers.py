@@ -75,3 +75,31 @@ class TechniqueSerializer(serializers.ModelSerializer):
         model = Technique
         fields = ["id", "name", "description"]
         read_only_fields = ["id"]
+
+
+class CalendarSerializer(serializers.Serializer):
+    """Serializer for validating calendar query parameters."""
+
+    start_date = serializers.DateField(required=False, allow_null=True)
+    end_date = serializers.DateField(required=False, allow_null=True)
+    date = serializers.DateField(
+        required=False, allow_null=True
+    )  # Dodaj pole dla jednej daty
+
+    def validate(self, attrs):
+        start_date = attrs.get("start_date")
+        end_date = attrs.get("end_date")
+        date = attrs.get("date")
+
+        if start_date and end_date and start_date > end_date:
+            raise serializers.ValidationError(
+                "The start date cannot be after the end date."
+            )
+
+        if date and (start_date or end_date):
+            raise serializers.ValidationError(
+                "You cannot provide both a date and a "
+                "date range (start_date/end_date)."
+            )
+
+        return attrs

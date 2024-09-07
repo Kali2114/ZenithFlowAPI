@@ -53,6 +53,7 @@ def create_user(**params):
 
 
 def create_meditation_session(**params):
+    """Create and return a new meditation session."""
     meditation_session = {
         "name": "Mindful Morning",
         "description": "Test description",
@@ -419,7 +420,7 @@ class InstructorMeditationSessionApiTests(TestCase):
         session = create_meditation_session(instructor=self.instructor)
 
         url = add_technique_to_session_url(session_id=session.id)
-        payload = {"technique_name": ""}  # Empty or non-existent technique
+        payload = {"technique_name": ""}
         res = self.client.post(url, payload)
 
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)

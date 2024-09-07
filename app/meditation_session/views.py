@@ -146,3 +146,46 @@ class TechniqueViewSet(viewsets.ModelViewSet):
         """Delete technique only by its creator."""
         check_user_is_creator(self.request.user, instance)
         instance.delete()
+
+
+class CalendarView(mixins.ListModelMixin, viewsets.GenericViewSet):
+    """View to retrieve meditation sessions for
+    authenticated users using token authentication."""
+
+    serializer_class = serializers.MeditationSessionSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """Retrieve filtered meditation sessions based on date filters."""
+        query_serializer = serializers.CalendarSerializer(
+            data=self.request.query_params
+        )
+        query_serializer.is_valid(raise_exception=True)
+
+        start_date = query_serializer.validated_data.get("start_date")
+        end_date = query_serializer.validated_data.get("end_date")
+        specific_date = query_serializer.validated_data.get("date")
+
+        queryset = models.MeditationSession.objects.all()
+        if start_date and end_date:
+            queryset = queryset.filter(
+                start_time__date__gte=start_date,
+                start_time__date__lte=end_date,
+            )
+        elif start_date:
+            queryset = queryset.filter(start_time__date__gte=start_date)
+        elif end_date:
+            queryset = queryset.filter(start_time__date__lte=end_date)
+        elif specific_date:
+            queryset = queryset.filter(start_time__date=specific_date)
+
+        return queryset.order_by("-start_time")
+
+    def get(self, request):
+        """Retrieve meditation sessions based on optional date filters."""
+        sessions = self.get_queryset()
+        serializer = serializers.MeditationSessionSerializer(
+            sessions, many=True
+        )
+        return Response(serializer.data)
