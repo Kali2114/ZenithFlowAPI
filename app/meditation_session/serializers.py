@@ -82,9 +82,10 @@ class CalendarSerializer(serializers.Serializer):
 
     start_date = serializers.DateField(required=False, allow_null=True)
     end_date = serializers.DateField(required=False, allow_null=True)
-    date = serializers.DateField(
-        required=False, allow_null=True
-    )  # Dodaj pole dla jednej daty
+    date = serializers.DateField(required=False, allow_null=True)
+    techniques = serializers.ListField(
+        child=serializers.CharField(), required=False
+    )
 
     def validate(self, attrs):
         start_date = attrs.get("start_date")

@@ -1,6 +1,7 @@
 """
 Tests for meditation session API.
 """
+
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
@@ -117,7 +118,7 @@ class PrivateMeditationSessionApiTests(TestCase):
         )
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data['results'], serializer.data)
+        self.assertEqual(res.data["results"], serializer.data)
 
     def test_get_meditation_session_detail(self):
         """Test get meditation session detail."""
@@ -433,28 +434,28 @@ class InstructorMeditationSessionApiTests(TestCase):
         # Create more sessions than PAGE_SIZE
         for i, session_num in enumerate(range(15)):
             create_meditation_session(
-                name=f'Meditation Session {i}',
+                name=f"Meditation Session {i}",
                 instructor=self.instructor,
-                start_time=timezone.now() + timedelta(days=session_num)
+                start_time=timezone.now() + timedelta(days=session_num),
             )
 
         res = self.client.get(MEDITATION_SESSION_URL)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertIn('results', res.data)
-        self.assertIn('count', res.data)
-        self.assertIn('next', res.data)
-        self.assertIn('previous', res.data)
+        self.assertIn("results", res.data)
+        self.assertIn("count", res.data)
+        self.assertIn("next", res.data)
+        self.assertIn("previous", res.data)
 
-        self.assertEqual(len(res.data['results']), 10)
+        self.assertEqual(len(res.data["results"]), 10)
 
-        self.assertEqual(res.data['count'], 15)
+        self.assertEqual(res.data["count"], 15)
 
-        self.assertIsNotNone(res.data['next'])
-        self.assertIsNone(res.data['previous'])
+        self.assertIsNotNone(res.data["next"])
+        self.assertIsNone(res.data["previous"])
 
-        next_url = res.data['next']
+        next_url = res.data["next"]
         res_next = self.client.get(next_url)
 
-        self.assertEqual(len(res_next.data['results']), 5)
-        self.assertIsNone(res_next.data['next'])
+        self.assertEqual(len(res_next.data["results"]), 5)
+        self.assertIsNone(res_next.data["next"])

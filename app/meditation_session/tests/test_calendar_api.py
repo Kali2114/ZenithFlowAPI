@@ -12,7 +12,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import MeditationSession
+from core.models import MeditationSession, Technique
 
 
 CALENDAR_URL = reverse("meditation_session:calendar-list")
@@ -103,9 +103,9 @@ class PrivateCalendarApiTests(TestCase):
         )
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 2)
-        self.assertEqual(res.data[0]["name"], self.session3.name)
-        self.assertEqual(res.data[1]["name"], self.session4.name)
+        self.assertEqual(len(res.data["results"]), 2)
+        self.assertEqual(res.data["results"][0]["name"], self.session3.name)
+        self.assertEqual(res.data["results"][1]["name"], self.session4.name)
 
     def test_retrieve_sessions_for_specific_date(self):
         """Test retrieving sessions for a specific date."""
@@ -113,8 +113,8 @@ class PrivateCalendarApiTests(TestCase):
         res = self.client.get(CALENDAR_URL, {"date": date})
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 1)
-        self.assertEqual(res.data[0]["name"], self.session1.name)
+        self.assertEqual(len(res.data["results"]), 1)
+        self.assertEqual(res.data["results"][0]["name"], self.session1.name)
 
     def test_retrieve_all_sessions(self):
         """Test retrieving all future sessions if no date is provided."""
@@ -122,10 +122,10 @@ class PrivateCalendarApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 4)
-        self.assertEqual(res.data[0]["name"], self.session2.name)
-        self.assertEqual(res.data[1]["name"], self.session1.name)
-        self.assertEqual(res.data[2]["name"], self.session3.name)
-        self.assertEqual(res.data[3]["name"], self.session4.name)
+        self.assertEqual(res.data["results"][0]["name"], self.session2.name)
+        self.assertEqual(res.data["results"][1]["name"], self.session1.name)
+        self.assertEqual(res.data["results"][2]["name"], self.session3.name)
+        self.assertEqual(res.data["results"][3]["name"], self.session4.name)
 
     def test_retrieve_sessions_in_date_range(self):
         """Test retrieving sessions within a specific date range."""
@@ -137,10 +137,10 @@ class PrivateCalendarApiTests(TestCase):
         )
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 3)
-        self.assertEqual(res.data[0]["name"], self.session1.name)
-        self.assertEqual(res.data[1]["name"], self.session3.name)
-        self.assertEqual(res.data[2]["name"], self.session4.name)
+        self.assertEqual(len(res.data["results"]), 3)
+        self.assertEqual(res.data["results"][0]["name"], self.session1.name)
+        self.assertEqual(res.data["results"][1]["name"], self.session3.name)
+        self.assertEqual(res.data["results"][2]["name"], self.session4.name)
 
     def test_no_sessions_in_date_range(self):
         """Test retrieving sessions when none
@@ -153,7 +153,7 @@ class PrivateCalendarApiTests(TestCase):
         )
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 0)
+        self.assertEqual(len(res.data["results"]), 0)
 
     def test_invalid_date_format(self):
         """Test invalid date format returns 400 bad request."""
@@ -174,3 +174,32 @@ class PrivateCalendarApiTests(TestCase):
             "The start date cannot be after the end date.",
             res.data["non_field_errors"],
         )
+
+    def test_fiter_session_by_techniques(self):
+        """Test filtering meditation sessions by techniques."""
+        body_scan = Technique.objects.create(
+            name="Body Scan",
+            description="Body Scan Technique",
+            instructor=self.instructor,
+        )
+        mindfulness = Technique.objects.create(
+            name="Mindfulness",
+            description="Mindfulness Technique",
+            instructor=self.instructor,
+        )
+        self.session1.techniques.add(body_scan)
+        self.session1.techniques.add(mindfulness)
+        self.session2.techniques.add(mindfulness)
+        res = self.client.get(
+            CALENDAR_URL, {"techniques": ["Body Scan", "Mindfulness"]}
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data["results"]), 2)
+
+    def test_fiter_session_by_non_exists_technique(self):
+        """Test filtering meditation sessions by non-existing technique."""
+        res = self.client.get(CALENDAR_URL, {"techniques": ["non_exists"]})
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data["results"]), 0)

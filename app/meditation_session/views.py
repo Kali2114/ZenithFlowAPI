@@ -180,6 +180,7 @@ class CalendarView(mixins.ListModelMixin, viewsets.GenericViewSet):
         start_date = query_serializer.validated_data.get("start_date")
         end_date = query_serializer.validated_data.get("end_date")
         specific_date = query_serializer.validated_data.get("date")
+        techniques = query_serializer.validated_data.get("techniques")
 
         queryset = models.MeditationSession.objects.all()
         queryset = queryset.select_related("instructor").prefetch_related(
@@ -198,6 +199,11 @@ class CalendarView(mixins.ListModelMixin, viewsets.GenericViewSet):
         elif specific_date:
             queryset = queryset.filter(start_time__date=specific_date)
 
+        if techniques:
+            queryset = queryset.filter(
+                techniques__name__in=techniques
+            ).distinct()
+
         return queryset.order_by("-start_time")
 
     def get(self, request):
@@ -206,4 +212,5 @@ class CalendarView(mixins.ListModelMixin, viewsets.GenericViewSet):
         serializer = serializers.MeditationSessionSerializer(
             sessions, many=True
         )
+
         return Response(serializer.data)

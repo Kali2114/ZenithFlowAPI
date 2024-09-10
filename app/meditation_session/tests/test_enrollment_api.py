@@ -93,7 +93,7 @@ class PrivateEnrollmentApiTests(TestCase):
         enrollment = Enrollment.objects.all()
         serializer = EnrollmentSerializer(enrollment, many=True)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, serializer.data)
+        self.assertEqual(res.data["results"], serializer.data)
 
     def test_retrieve_enrollments_listing_to_user(self):
         """Test retrieving a list of enrollments listing to user."""
@@ -122,8 +122,8 @@ class PrivateEnrollmentApiTests(TestCase):
         serializer = EnrollmentSerializer(enrollments, many=True)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 2)
-        self.assertEqual(res.data, serializer.data)
+        self.assertEqual(len(res.data["results"]), 2)
+        self.assertEqual(res.data["results"], serializer.data)
 
     def test_get_enrollment_detail(self):
         """Test get enrollment detail."""
