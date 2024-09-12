@@ -2,6 +2,7 @@
 User models.
 """
 
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import (
     models,
     transaction,
@@ -73,6 +74,7 @@ class MeditationSession(models.Model):
     max_participants = models.PositiveIntegerField(default=20)
     created_at = models.DateTimeField(auto_now_add=True)
     techniques = models.ManyToManyField("Technique", related_name="sessions")
+    is_completed = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.name} by {self.instructor}"
@@ -137,3 +139,22 @@ class Technique(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Rating(models.Model):
+    """Model for rating object."""
+
+    session = models.ForeignKey(
+        "MeditationSession", on_delete=models.CASCADE, related_name="ratings"
+    )
+    user = models.ForeignKey(
+        "User", on_delete=models.CASCADE, related_name="ratings"
+    )
+    rating = models.PositiveIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    comment = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.name} rated {self.session.name} ({self.rating}/5)"

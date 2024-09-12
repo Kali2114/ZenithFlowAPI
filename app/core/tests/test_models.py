@@ -139,3 +139,25 @@ class ModelTests(TestCase):
         )
 
         self.assertEqual(str(technique), f"{technique.name}")
+
+    def test_create_rating(self):
+        """Test a creating rating successful."""
+        user = get_user_model().objects.create_user(
+            email="test@example.com", password="Test123", name="Testname"
+        )
+        instructor = create_instructor()
+        meditation_session = create_meditation_session(
+            instructor=instructor,
+            is_completed=True,
+        )
+        rating = models.Rating.objects.create(
+            user=user,
+            session=meditation_session,
+            rating=5,
+            comment="Awesome session.",
+        )
+
+        self.assertEqual(
+            str(rating),
+            f"{user.name} rated {meditation_session.name} ({rating.rating}/5)",
+        )
