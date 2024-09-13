@@ -214,3 +214,44 @@ class CalendarView(mixins.ListModelMixin, viewsets.GenericViewSet):
         )
 
         return Response(serializer.data)
+
+
+class RatingViewSet(viewsets.ModelViewSet):
+    """Manage ratings in the database."""
+
+    serializer_class = serializers.RatingSerializer
+    queryset = models.Rating.objects.all().order_by("-created_at")
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """Return ratings for the specific session or all ratings."""
+
+        session_id = self.request.query_params.get("session_id")
+
+        if session_id:
+            return self.queryset.filter(session_id=session_id).order_by(
+                "-created_at"
+            )
+
+        return self.queryset.filter(user=self.request.user).order_by(
+            "-created_at"
+        )
+
+    def perform_create(self, serializer):
+        """Create a new rating for a session."""
+        session_id = self.request.data.get("session")
+        if not session_id:
+            raise ValidationError("Session ID is required.")
+
+        try:
+            session = models.MeditationSession.objects.get(id=session_id)
+        except models.MeditationSession.DoesNotExist:
+            raise ValidationError("The session does not exist.")
+
+        if not session.is_completed:
+            raise ValidationError(
+                "You cannot rate a session that has not been completed yet."
+            )
+
+        serializer.save(user=self.request.user, session=session)

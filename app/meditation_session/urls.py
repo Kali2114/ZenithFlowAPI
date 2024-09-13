@@ -17,6 +17,7 @@ router.register("meditation_sessions", views.MeditationSessionViewSet)
 router.register("enrollments", views.EnrollmentViewSet)
 router.register("techniques", views.TechniqueViewSet)
 router.register("calendar", views.CalendarView, basename="calendar")
+router.register("ratings", views.RatingViewSet)
 
 app_name = "meditation_session"
 
