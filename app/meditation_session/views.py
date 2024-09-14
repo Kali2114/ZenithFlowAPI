@@ -8,6 +8,7 @@ from rest_framework import viewsets, mixins, status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError, PermissionDenied
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 
 from core import models
@@ -225,29 +226,17 @@ class RatingViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """Return ratings for the specific session or all ratings."""
-
-        session_id = self.request.query_params.get("session_id")
-
-        if session_id:
-            return self.queryset.filter(session_id=session_id).order_by(
-                "-created_at"
-            )
-
-        return self.queryset.filter(user=self.request.user).order_by(
+        """Retrieve ratings for the specific session."""
+        session_id = self.kwargs["session_id"]
+        session = get_object_or_404(models.MeditationSession, id=session_id)
+        return models.Rating.objects.filter(session=session).order_by(
             "-created_at"
         )
 
     def perform_create(self, serializer):
-        """Create a new rating for a session."""
-        session_id = self.request.data.get("session")
-        if not session_id:
-            raise ValidationError("Session ID is required.")
-
-        try:
-            session = models.MeditationSession.objects.get(id=session_id)
-        except models.MeditationSession.DoesNotExist:
-            raise ValidationError("The session does not exist.")
+        """Create a new rating for a session using session_id from the URL."""
+        session_id = self.kwargs["session_id"]
+        session = get_object_or_404(models.MeditationSession, id=session_id)
 
         if not session.is_completed:
             raise ValidationError(
@@ -255,3 +244,14 @@ class RatingViewSet(viewsets.ModelViewSet):
             )
 
         serializer.save(user=self.request.user, session=session)
+
+    def perform_update(self, serializer):
+        """Update rating only by its creator."""
+        instance = self.get_object()
+        check_user_is_creator(self.request.user, instance)
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        """Delete rating only by its creator."""
+        check_user_is_creator(self.request.user, instance)
+        instance.delete()

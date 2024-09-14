@@ -21,36 +21,42 @@ class RatingSerializer(serializers.ModelSerializer):
     """Serializer for listing ratings."""
 
     user = serializers.StringRelatedField(read_only=True)
-    session = serializers.PrimaryKeyRelatedField(
-        queryset=MeditationSession.objects.all()
-    )
+    session = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Rating
         fields = ["id", "user", "session", "rating", "comment", "created_at"]
-        read_only_fields = ["id", "user", "created_at"]
+        read_only_fields = ["id", "user", "session", "created_at"]
 
     def validate(self, attrs):
         """Ensure that user cannot rate the same session twice
         and instructor cannot rate their own session."""
 
-        session = attrs["session"]
-        user = self.context["request"].user
-
-        if not Enrollment.objects.filter(user=user, session=session).exists():
-            raise serializers.ValidationError(
-                "You must be enrolled in the session to rate it."
+        if not self.instance:
+            session_id = (
+                self.instance.session.id
+                if self.instance
+                else self.context["view"].kwargs["session_id"]
             )
+            session = MeditationSession.objects.get(id=session_id)
+            user = self.context["request"].user
 
-        if Rating.objects.filter(user=user, session=session).exists():
-            raise serializers.ValidationError(
-                "You have already rated this session."
-            )
+            if not Enrollment.objects.filter(
+                user=user, session=session
+            ).exists():
+                raise serializers.ValidationError(
+                    "You must be enrolled in the session to rate it."
+                )
 
-        if session.instructor == user:
-            raise serializers.ValidationError(
-                "Instructors cannot rate their own sessions."
-            )
+            if Rating.objects.filter(user=user, session=session).exists():
+                raise serializers.ValidationError(
+                    "You have already rated this session."
+                )
+
+            if session.instructor == user:
+                raise serializers.ValidationError(
+                    "Instructors cannot rate their own sessions."
+                )
 
         return attrs
 

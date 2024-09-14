@@ -16,7 +16,16 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 
-RATING_URL = reverse("meditation_session:rating-list")
+def session_rating_url(session_id):
+    """Return the URL for session ratings."""
+    return reverse("meditation_session:session-rating-list", args=[session_id])
+
+
+def detail_url(session_id, rating_id):
+    """Create and return a detail url for rating."""
+    return reverse(
+        "meditation_session:rating-detail", args=[session_id, rating_id]
+    )
 
 
 def create_instructor(**params):
@@ -64,7 +73,10 @@ class PublicRatingApiTests(TestCase):
 
     def test_auth_required(self):
         """Test auth is required to call API."""
-        res = self.client.get(RATING_URL)
+        instructor = create_instructor()
+        session = create_meditation_session(instructor=instructor)
+        url = session_rating_url(session.id)
+        res = self.client.get(url)
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
@@ -76,13 +88,13 @@ class PrivateRatingApiTests(TestCase):
         self.client = APIClient()
         self.instructor = create_instructor()
         self.user = create_user()
-        self.session = create_meditation_session(instructor=self.instructor)
-        self.client.force_authenticate(user=self.user)
+        self.session = create_meditation_session(
+            instructor=self.instructor, is_completed=True
+        )
         self.client.force_authenticate(user=self.user)
 
     def test_list_ratings_for_session(self):
         """Test listing ratings for a session with pagination."""
-
         Enrollment.objects.create(user=self.user, session=self.session)
 
         Rating.objects.create(
@@ -92,7 +104,8 @@ class PrivateRatingApiTests(TestCase):
             user=self.user, session=self.session, rating=5, comment="Great"
         )
 
-        res = self.client.get(RATING_URL)
+        url = session_rating_url(self.session.id)
+        res = self.client.get(url)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn("results", res.data)
@@ -104,36 +117,36 @@ class PrivateRatingApiTests(TestCase):
 
     def test_create_rating_for_session_success(self):
         """Test create rating for meditation session successful."""
-
         Enrollment.objects.create(user=self.user, session=self.session)
         payload = {
-            "session": self.session.id,
             "rating": 5,
             "comment": "Test Comment",
         }
-        res = self.client.post(RATING_URL, payload)
+        url = session_rating_url(self.session.id)
+        res = self.client.post(url, payload)
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(res.data["session"], self.session.id)
         self.assertEqual(res.data["rating"], payload["rating"])
         self.assertEqual(res.data["comment"], payload["comment"])
+        self.assertEqual(res.data["user"], self.user.email)
         self.assertEqual(self.session.ratings.count(), 1)
 
     def test_create_rating_without_enrollment_failed(self):
         """Test create rating for meditation
-        session without enrollment fails."""
+         session without enrollment fails."""
         payload = {
-            "session": self.session.id,
             "rating": 5,
             "comment": "Test Comment",
         }
-        res = self.client.post(RATING_URL, payload)
+        url = session_rating_url(self.session.id)
+        res = self.client.post(url, payload)
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_cannot_add_multiple_ratings_to_same_session(self):
         """Test that user cannot add multiple ratings to the same session."""
-
+        Enrollment.objects.create(user=self.user, session=self.session)
         Rating.objects.create(
             user=self.user,
             session=self.session,
@@ -141,30 +154,95 @@ class PrivateRatingApiTests(TestCase):
             comment="Great session!",
         )
         payload = {
-            "session": self.session.id,
             "rating": 4,
             "comment": "Trying to rate again!",
         }
-        res = self.client.post(RATING_URL, payload)
+        url = session_rating_url(self.session.id)
+        res = self.client.post(url, payload)
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(self.session.ratings.count(), 1)
 
     def test_cannot_rate_ongoing_session(self):
         """Test that a user cannot rate a session that is still ongoing."""
-
         ongoing_session = create_meditation_session(
             instructor=self.instructor, is_completed=False
         )
         Enrollment.objects.create(user=self.user, session=ongoing_session)
         payload = {
-            "session": ongoing_session.id,
             "rating": 4,
             "comment": "Trying to rate an ongoing session",
         }
-        res = self.client.post(RATING_URL, payload)
+        url = session_rating_url(ongoing_session.id)
+        res = self.client.post(url, payload)
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_update_own_rating(self):
+        """Test update own rating is successful."""
+        Enrollment.objects.create(user=self.user, session=self.session)
+        rating = Rating.objects.create(
+            user=self.user,
+            session=self.session,
+            rating=5,
+            comment="Great session!",
+        )
+        payload = {"rating": 2, "comment": "Updated Comment."}
+        url = detail_url(self.session.id, rating.id)
+        res = self.client.patch(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        rating.refresh_from_db()
+        for k, v in payload.items():
+            self.assertEqual(getattr(rating, k), v)
+
+    def test_update_another_user_rating_failed(self):
+        """Test updating another user's rating fails."""
+        another_user = create_user(email="another@example.com", name="another")
+        rating = Rating.objects.create(
+            user=another_user,
+            session=self.session,
+            rating=5,
+            comment="Great session!",
+        )
+        payload = {"rating": 2, "comment": "Updated Comment."}
+        url = detail_url(self.session.id, rating.id)
+        res = self.client.patch(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        rating.refresh_from_db()
+        self.assertEqual(rating.user, another_user)
+        self.assertEqual(rating.rating, 5)
+
+    def test_delete_own_rating_success(self):
+        """Test deleting own rating is successful."""
+        rating = Rating.objects.create(
+            user=self.user,
+            session=self.session,
+            rating=5,
+            comment="Great session!",
+        )
+        url = detail_url(self.session.id, rating.id)
+        res = self.client.delete(url)
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_another_user_rating_failed(self):
+        """Test deleting another user rating is failed."""
+        another_user = create_user(email="another@example.com", name="Another")
+        rating = Rating.objects.create(
+            user=another_user,
+            session=self.session,
+            rating=5,
+            comment="Great session!",
+        )
+        url = detail_url(self.session.id, rating.id)
+        res = self.client.delete(url)
+
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        rating_exists = Rating.objects.filter(id=rating.id).exists()
+        self.assertTrue(rating_exists)
 
 
 class InstructorRatingApiTests(TestCase):
@@ -173,7 +251,9 @@ class InstructorRatingApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.instructor = create_instructor()
-        self.session = create_meditation_session(instructor=self.instructor)
+        self.session = create_meditation_session(
+            instructor=self.instructor, is_completed=True
+        )
         self.client.force_authenticate(user=self.instructor)
         self.enrollment = Enrollment.objects.create(
             user=self.instructor, session=self.session
@@ -181,12 +261,11 @@ class InstructorRatingApiTests(TestCase):
 
     def test_instructor_cannot_rate_own_session(self):
         """Test that the instructor cannot rate their own session."""
-
         payload = {
-            "session": self.session.id,
             "rating": 5,
             "comment": "Trying to rate my own session!",
         }
-        res = self.client.post(RATING_URL, payload)
+        url = session_rating_url(self.session.id)
+        res = self.client.post(url, payload)
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)

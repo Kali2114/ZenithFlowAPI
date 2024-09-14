@@ -17,8 +17,21 @@ router.register("meditation_sessions", views.MeditationSessionViewSet)
 router.register("enrollments", views.EnrollmentViewSet)
 router.register("techniques", views.TechniqueViewSet)
 router.register("calendar", views.CalendarView, basename="calendar")
-router.register("ratings", views.RatingViewSet)
 
 app_name = "meditation_session"
 
-urlpatterns = [path("", include(router.urls))]
+urlpatterns = [
+    path("", include(router.urls)),
+    path(
+        "sessions/<int:session_id>/ratings/<int:pk>/",
+        views.RatingViewSet.as_view(
+            {"get": "retrieve", "patch": "partial_update", "delete": "destroy"}
+        ),
+        name="rating-detail",
+    ),
+    path(
+        "sessions/<int:session_id>/ratings/",
+        views.RatingViewSet.as_view({"post": "create", "get": "list"}),
+        name="session-rating-list",
+    ),
+]
