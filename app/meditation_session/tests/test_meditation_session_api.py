@@ -22,6 +22,14 @@ from meditation_session.serializers import (
 MEDITATION_SESSION_URL = reverse("meditation_session:meditationsession-list")
 
 
+def meditation_session_complete(meditation_session_id):
+    """Marked meditation session as completed."""
+    return reverse(
+        "meditation_session:meditationsession-complete-session",
+        args=[meditation_session_id],
+    )
+
+
 def detail_url(meditation_session_id):
     """Get a detail url for meditation session."""
     return reverse(
@@ -219,6 +227,18 @@ class PrivateMeditationSessionApiTests(TestCase):
         res = self.client.post(url, payload)
 
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_user_cannot_complete_session(self):
+        """Test that user cannot mark a session as completed."""
+        meditation_session = create_meditation_session(
+            instructor=self.instructor
+        )
+        url = meditation_session_complete(meditation_session.id)
+        res = self.client.patch(url)
+
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        meditation_session.refresh_from_db()
+        self.assertFalse(meditation_session.is_completed)
 
 
 class InstructorMeditationSessionApiTests(TestCase):
@@ -459,3 +479,31 @@ class InstructorMeditationSessionApiTests(TestCase):
 
         self.assertEqual(len(res_next.data["results"]), 5)
         self.assertIsNone(res_next.data["next"])
+
+    def test_instructor_can_complete_own_session(self):
+        """Test that instructor can mark a own session as completed."""
+        meditation_session = create_meditation_session(
+            instructor=self.instructor
+        )
+        url = meditation_session_complete(meditation_session.id)
+        res = self.client.patch(url)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        meditation_session.refresh_from_db()
+        self.assertTrue(meditation_session.is_completed)
+
+    def test_instructor_cannot_complete_another_instructor_session(self):
+        """Test that instructor cannot mark
+        another instructor session as completed."""
+        another_instructor = create_instructor(
+            email="another@example.com", name="another instructor"
+        )
+        meditation_session = create_meditation_session(
+            instructor=another_instructor
+        )
+        url = meditation_session_complete(meditation_session.id)
+        res = self.client.patch(url)
+
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        meditation_session.refresh_from_db()
+        self.assertFalse(meditation_session.is_completed)

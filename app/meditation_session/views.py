@@ -90,6 +90,20 @@ class MeditationSessionViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
+    @action(detail=True, methods=["patch"], url_path="complete-session")
+    def complete_session(self, request, pk=None):
+        """Allow the session's creator (instructor) to mark it as completed."""
+
+        session = self.get_object()
+        check_user_is_creator(request.user, session)
+        session.is_completed = True
+        session.save()
+
+        return Response(
+            {"status": "session marked as completed"},
+            status=status.HTTP_200_OK,
+        )
+
 
 class EnrollmentViewSet(
     mixins.CreateModelMixin,

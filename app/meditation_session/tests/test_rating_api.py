@@ -134,7 +134,7 @@ class PrivateRatingApiTests(TestCase):
 
     def test_create_rating_without_enrollment_failed(self):
         """Test create rating for meditation
-         session without enrollment fails."""
+        session without enrollment fails."""
         payload = {
             "rating": 5,
             "comment": "Test Comment",
