@@ -4,7 +4,12 @@ Serializers for meditation session APIs.
 
 from rest_framework import serializers
 
-from core.models import MeditationSession, Enrollment, Technique, Rating
+from core.models import (
+    MeditationSession,
+    Enrollment,
+    Technique,
+    Rating,
+)
 from rest_framework.exceptions import ValidationError
 
 

@@ -8,12 +8,17 @@ from rest_framework import (
     permissions,
 )
 from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.settings import api_settings
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 
 from user.serializers import (
     UserSerializer,
+    UserProfileSerializer,
     AuthTokenSerializer,
 )
+from core.models import UserProfile
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -39,3 +44,24 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         """Retrieve and return the authenticated user."""
         return self.request.user
+
+
+class UserProfileDetailView(generics.RetrieveUpdateAPIView):
+    """Manage user profiles in the database."""
+
+    serializer_class = UserProfileSerializer
+    queryset = UserProfile.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """Retrieve profile for authenticated user."""
+        return UserProfile.objects.filter(user=self.request.user)
+
+    def perform_update(self, serializer):
+        """Allow users to update only their own profiles."""
+        if self.request.user != serializer.instance.user:
+            raise PermissionDenied(
+                "You do not have permission to edit this profile."
+            )
+        serializer.save()

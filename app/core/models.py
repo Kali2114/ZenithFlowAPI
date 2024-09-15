@@ -58,6 +58,19 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = "email"
 
 
+class UserProfile(models.Model):
+    """Model for user pofile."""
+
+    user = models.OneToOneField("User", on_delete=models.CASCADE)
+    avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
+    biography = models.TextField(blank=True, null=True)
+    sessions_attended = models.IntegerField(default=0)
+    total_time_spent = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.user.name}'s profile"
+
+
 class MeditationSession(models.Model):
     """Model for meditation session object."""
 

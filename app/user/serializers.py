@@ -7,8 +7,9 @@ from django.contrib.auth import (
     authenticate,
 )
 from django.utils.translation import gettext as _
-
 from rest_framework import serializers
+
+from core.models import UserProfile
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -58,3 +59,20 @@ class AuthTokenSerializer(serializers.Serializer):
 
         attrs["user"] = user
         return attrs
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    """Serializer for user profiles."""
+
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = UserProfile
+        fields = [
+            "user",
+            "biography",
+            "avatar",
+            "sessions_attended",
+            "total_time_spent",
+        ]
+        read_only_fields = ["sessions_attended", "total_time_spent"]

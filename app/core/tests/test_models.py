@@ -2,6 +2,9 @@
 Tests for models.
 """
 
+import io
+from PIL import Image
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
@@ -42,6 +45,19 @@ def create_meditation_session(**params):
     }
     meditation_session.update(**params)
     return models.MeditationSession.create(**meditation_session)
+
+
+def create_test_image():
+    """Create a dummy image for avatar."""
+    image = Image.new(
+        "RGB", (100, 100), color="blue"
+    )  # Tworzy niebieski obrazek 100x100
+    byte_arr = io.BytesIO()
+    image.save(byte_arr, format="PNG")
+    byte_arr.seek(0)
+    return SimpleUploadedFile(
+        "avatar.png", byte_arr.read(), content_type="image/png"
+    )
 
 
 class ModelTests(TestCase):
@@ -161,3 +177,10 @@ class ModelTests(TestCase):
             str(rating),
             f"{user.name} rated {meditation_session.name} ({rating.rating}/5)",
         )
+
+    def test_create_user_profile(self):
+        """Test creating user profile successful."""
+        user = create_user(email="test2@example.com", name="Test User 2")
+        user_profile = models.UserProfile.objects.get(user=user)
+
+        self.assertEqual(str(user_profile), f"{user.name}'s profile")
