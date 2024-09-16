@@ -61,7 +61,9 @@ class User(AbstractBaseUser, PermissionsMixin):
 class UserProfile(models.Model):
     """Model for user pofile."""
 
-    user = models.OneToOneField("User", on_delete=models.CASCADE)
+    user = models.OneToOneField(
+        "User", on_delete=models.CASCADE, related_name="user_profile"
+    )
     avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
     biography = models.TextField(blank=True, null=True)
     sessions_attended = models.IntegerField(default=0)
@@ -69,6 +71,17 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.name}'s profile"
+
+    def update_sessions_and_time(self):
+        """Update the total numer of sessions attended and total time spent."""
+        complete_session = self.user.enrollments.filter(
+            session__is_completed=True
+        ).select_related("session")
+        self.sessions_attended = complete_session.count()
+        self.total_time_spent = sum(
+            enrollment.session.duration for enrollment in complete_session
+        )
+        self.save()
 
 
 class MeditationSession(models.Model):

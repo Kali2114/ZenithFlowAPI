@@ -2,6 +2,7 @@
 Test for user profile.
 """
 
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -9,7 +10,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.test import TestCase
 
-from core.models import UserProfile
+from core.models import UserProfile, MeditationSession, Enrollment
 
 
 def create_user(**params):
@@ -24,9 +25,33 @@ def create_user(**params):
     return get_user_model().objects.create_user(**default_user)
 
 
+def create_instructor(**params):
+    """Create and return a new instructor."""
+    default_user = {
+        "email": "instructor@example.com",
+        "password": "testpass123",
+        "name": "Instructor",
+    }
+    default_user.update(params)
+
+    return get_user_model().objects.create_superuser(**default_user)
+
+
 def detail_url(user_id):
     """Create and return a detail url for user profile."""
     return reverse("user:userprofile-detail", args=[user_id])
+
+
+def create_meditation_session(**params):
+    """Create and return a new meditation session."""
+    meditation_session = {
+        "name": "Mindful Morning",
+        "description": "Test description",
+        "duration": 40,
+        "start_time": timezone.now(),
+    }
+    meditation_session.update(**params)
+    return MeditationSession.create(**meditation_session)
 
 
 class PublicUserProfileTests(TestCase):
@@ -48,6 +73,9 @@ class PrivateUserProfileTests(TestCase):
 
     def setUp(self):
         self.user = create_user()
+        self.instructor = create_instructor()
+        self.session = create_meditation_session(instructor=self.instructor)
+        self.profile = UserProfile.objects.get(user=self.user)
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
 
@@ -103,3 +131,27 @@ class PrivateUserProfileTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
         user_profile = UserProfile.objects.filter(user=self.user).exists()
         self.assertTrue(user_profile)
+
+    def test_session_completion_updates_profile(self):
+        """Test that completing a session updates the user's profile."""
+        Enrollment.objects.create(user=self.user, session=self.session)
+        self.session.is_completed = True
+        self.session.save()
+
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.sessions_attended, 1)
+        self.assertEqual(self.profile.total_time_spent, 40)
+
+    def test_session_completion_does_not_update_profile_of_other_user(self):
+        """Test that completing a session by another
+        user does not affect the logged-in user's profile."""
+        another_user = create_user(
+            email="another@example.com", name="Another User"
+        )
+        Enrollment.objects.create(user=another_user, session=self.session)
+        self.session.is_completed = True
+        self.session.save()
+
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.sessions_attended, 0)
+        self.assertEqual(self.profile.total_time_spent, 0)
