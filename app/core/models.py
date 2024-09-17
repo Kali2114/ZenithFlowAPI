@@ -2,6 +2,9 @@
 User models.
 """
 
+import uuid
+import os
+
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import (
     models,
@@ -15,6 +18,14 @@ from django.contrib.auth.models import (
 from django.utils import timezone
 
 from core import constants
+
+
+def avatar_file_path(instance, filename):
+    """Generate file path for user avatar."""
+    ext = os.path.splitext(filename)[1]
+    filename = f"{uuid.uuid4()}{ext}"
+
+    return os.path.join("uploads", "avatar", filename)
 
 
 class UserManager(BaseUserManager):
@@ -64,7 +75,9 @@ class UserProfile(models.Model):
     user = models.OneToOneField(
         "User", on_delete=models.CASCADE, related_name="user_profile"
     )
-    avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
+    avatar = models.ImageField(
+        upload_to=avatar_file_path, blank=True, null=True
+    )
     biography = models.TextField(blank=True, null=True)
     sessions_attended = models.IntegerField(default=0)
     total_time_spent = models.IntegerField(default=0)

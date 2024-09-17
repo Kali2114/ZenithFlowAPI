@@ -76,3 +76,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "total_time_spent",
         ]
         read_only_fields = ["sessions_attended", "total_time_spent"]
+
+
+class UserAvatarSerializer(serializers.ModelSerializer):
+    """Serializer for uploading avatars to users."""
+
+    class Meta:
+        model = UserProfile
+        fields = ["id", "avatar"]
+        read_only_fields = ["id"]
+        extra_kwargs = {"avatar": {"required": "False"}}

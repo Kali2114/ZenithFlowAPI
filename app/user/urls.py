@@ -18,4 +18,9 @@ urlpatterns = [
         views.UserProfileDetailView.as_view(),
         name="userprofile-detail",
     ),
+    path(
+        "user/<int:pk>/profile/upload-avatar/",
+        views.UserProfileDetailView.as_view(),
+        name="upload-avatar",
+    ),
 ]

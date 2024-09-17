@@ -2,6 +2,11 @@
 Test for user profile.
 """
 
+import os
+import tempfile
+
+from PIL import Image
+
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -52,6 +57,11 @@ def create_meditation_session(**params):
     }
     meditation_session.update(**params)
     return MeditationSession.create(**meditation_session)
+
+
+def image_upload_url(user_id):
+    """Create and return an image upload URL."""
+    return reverse("user:upload-avatar", args=[user_id])
 
 
 class PublicUserProfileTests(TestCase):
@@ -155,3 +165,38 @@ class PrivateUserProfileTests(TestCase):
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.sessions_attended, 0)
         self.assertEqual(self.profile.total_time_spent, 0)
+
+
+class ImageUploadTests(TestCase):
+    """Tests for the image upload API."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = create_user()
+        self.client.force_authenticate(user=self.user)
+
+    def tearDown(self):
+        self.user.user_profile.avatar.delete()
+
+    def test_upload_image(self):
+        """Test uploading an image to user's avatar."""
+        url = image_upload_url(self.user.id)
+        with tempfile.NamedTemporaryFile(suffix=".jpg") as image_file:
+            img = Image.new("RGB", (10, 10))
+            img.save(image_file, format="JPEG")
+            image_file.seek(0)
+            payload = {"avatar": image_file}
+            res = self.client.patch(url, payload, format="multipart")
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.user.refresh_from_db()
+        self.assertIn("avatar", res.data)
+        self.assertTrue(os.path.exists(self.user.user_profile.avatar.path))
+
+    def test_upload_image_bad_request(self):
+        """Test uploading invalid image."""
+        url = image_upload_url(self.user.id)
+        payload = {"avatar": "bad request"}
+        res = self.client.patch(url, payload, format="multipart")
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)

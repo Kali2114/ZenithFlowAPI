@@ -4,6 +4,7 @@ Tests for models.
 
 import io
 from PIL import Image
+from unittest.mock import patch
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.contrib.auth import get_user_model
@@ -184,3 +185,12 @@ class ModelTests(TestCase):
         user_profile = models.UserProfile.objects.get(user=user)
 
         self.assertEqual(str(user_profile), f"{user.name}'s profile")
+
+    @patch("core.models.uuid.uuid4")
+    def test_generate_image_path(self, mock_uuid):
+        """Test generating path for image is successful."""
+        uuid = "test-uuid"
+        mock_uuid.return_value = uuid
+        file_path = models.avatar_file_path(None, "example.jpg")
+
+        self.assertEqual(file_path, f"uploads/avatar/{uuid}.jpg")
