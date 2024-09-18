@@ -82,25 +82,28 @@ Once the app is running, you can access the API at http://localhost:8000.
 
 ## API Endpoints
 
-User Authentication:
+### User Authentication:
 
-POST /api/user/create/ - Register a new user
-POST /api/user/token/ - Obtain authentication token
-GET /api/user/me/ - Manage current authenticated user
-User Profiles:
+* POST /api/user/create/ - Register a new user
+* POST /api/user/token/ - Obtain authentication token
+* GET /api/user/me/ - Manage current authenticated user
 
-GET /user/<int:pk>/profile/ - View and edit the user's profile
-PATCH /user/<int:pk>/profile/upload-avatar/ - Upload a profile avatar
-Meditation Sessions:
+### User Profiles:
 
-POST /sessions/ - Create a new session (instructor only)
-GET /sessions/ - List all sessions
-PATCH /sessions/<int:pk>/complete-session/ - Mark a session as completed
-POST /sessions/<int:pk>/add-technique/ - Add a technique to a session
-Ratings:
+* GET /user/<int:pk>/profile/ - View and edit the user's profile
+* PATCH /user/<int:pk>/profile/upload-avatar/ - Upload a profile avatar
 
-POST /sessions/<int:session_id>/ratings/ - Rate a session
-GET /sessions/<int:session_id>/ratings/ - Get session ratings
+### Meditation Sessions:
+
+* POST /sessions/ - Create a new session (instructor only)
+* GET /sessions/ - List all sessions
+* PATCH /sessions/<int:pk>/complete-session/ - Mark a session as completed
+* POST /sessions/<int:pk>/add-technique/ - Add a technique to a session
+
+### Ratings:
+
+* POST /sessions/<int:session_id>/ratings/ - Rate a session
+* GET /sessions/<int:session_id>/ratings/ - Get session ratings
 
 ## Testing
 ZenithFlow follows Test-Driven Development (TDD), with over 100 tests to ensure functionality. To run tests, use the following command:
