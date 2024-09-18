@@ -60,7 +60,9 @@ class UserProfileDetailView(generics.RetrieveUpdateAPIView):
 
     def get_queryset(self):
         """Retrieve profile for authenticated user."""
-        return UserProfile.objects.filter(user=self.request.user).select_related('user')
+        return UserProfile.objects.filter(
+            user=self.request.user
+        ).select_related("user")
 
     def get_serializer_class(self):
         """Return the serializer class for request."""
