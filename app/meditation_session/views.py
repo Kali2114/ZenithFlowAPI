@@ -125,8 +125,9 @@ class EnrollmentViewSet(
 
     def get_queryset(self):
         """Retrieve enrollments for the authenticated user"""
-        return self.queryset.filter(user=self.request.user).order_by(
-            "-enrolled_at"
+        return (self.queryset.filter(user=self.request.user)
+        .select_related('session__instructor')
+        .order_by("-enrolled_at")
         )
 
     def get_serializer_class(self):
@@ -138,7 +139,8 @@ class EnrollmentViewSet(
 
     def perform_create(self, serializer):
         """Create a new enrollment."""
-        session = models.MeditationSession.objects.get(
+        session = get_object_or_404(
+            models.MeditationSession,
             id=self.request.data.get("session")
         )
         try:
@@ -243,7 +245,7 @@ class RatingViewSet(viewsets.ModelViewSet):
         """Retrieve ratings for the specific session."""
         session_id = self.kwargs["session_id"]
         session = get_object_or_404(models.MeditationSession, id=session_id)
-        return models.Rating.objects.filter(session=session).order_by(
+        return models.Rating.objects.filter(session=session).select_related('session').order_by(
             "-created_at"
         )
 
