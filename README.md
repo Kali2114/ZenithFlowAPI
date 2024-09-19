@@ -1,4 +1,4 @@
-# ZenithFlow
+****# ZenithFlow
 ZenithFlow is a meditation and self-development platform designed to help users achieve mindfulness and personal growth. Built with modern technologies such as Django, REST API, Celery, Redis, and integrated with AWS, the application provides a seamless and scalable experience for hosting meditation sessions, tracking progress, and managing user subscriptions.
 
 ## Table of Contents
@@ -124,4 +124,4 @@ Contributions are welcome! If you'd like to contribute:
 Please make sure your code adheres to the project’s coding standards and passes all tests.
 
 ## License
-This project is licensed under the GPL-3.0 License. See the LICENSE file for more details.
+This project is licensed under the GPL-3.0 License. See the LICENSE file for more details.****
