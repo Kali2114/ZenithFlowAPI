@@ -27,10 +27,10 @@ RUN python -m venv /py && \
     mkdir -p /vol/web/static && \
     chown -R django-user:django-user /vol && \
     chmod -R 755 /vol/web && \
-    chmod +x /scripts
+    chmod +x /scripts/run.sh
 
 ENV PATH="/scripts:/py/bin:$PATH"
 
 USER django-user
 
-CMD ["run.sh"]
+CMD ["/scripts/run.sh"]

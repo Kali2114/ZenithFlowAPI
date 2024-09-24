@@ -1,2 +1,14 @@
 Django==5.1
 djangorestframework==3.15.2
+uWSGI==2.0.26
+redis==5.0.8
+django-celery-beat==2.7.0
+django-celery-results==2.5.1
+django-extensions==3.2.3
+django-redis==5.4.0
+django-timezone-field==7.0
+drf-spectacular==0.27.2
+psycopg2-binary==2.9.9
+python-dotenv==1.0.1
+celery==5.4.0
+pillow==10.4.0
