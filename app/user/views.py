@@ -2,11 +2,16 @@
 Views for user API.
 """
 
+from datetime import timedelta
+
+from django.utils import timezone
 from rest_framework import (
     generics,
     authentication,
     permissions,
     status,
+    mixins,
+    viewsets,
 )
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
@@ -15,14 +20,20 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 
 from user.serializers import (
     UserSerializer,
     UserProfileSerializer,
     AuthTokenSerializer,
     UserAvatarSerializer,
+    SubscriptionSerializer,
 )
-from core.models import UserProfile
+from core.models import (
+    UserProfile,
+    Subscription,
+)
+from user.utils import check_balance, deduct_user_balance
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -48,6 +59,42 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         """Retrieve and return the authenticated user."""
         return self.request.user
+
+
+class AddFundsView(APIView):
+    """View to allow users to add funds to their account."""
+
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """Add funds to the authenticated user's account."""
+        amount = request.data.get("amount")
+
+        try:
+            amount = float(amount)
+            if amount <= 0:
+                return Response(
+                    {"detail": "Invalid amount provided."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        except (TypeError, ValueError):
+            return Response(
+                {"detail": "Invalid amount provided."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = request.user
+        user.cash_balance += amount
+        user.save()
+
+        return Response(
+            {
+                "detail": "Funds added successfully.",
+                "new_balance": user.cash_balance,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class UserProfileDetailView(generics.RetrieveUpdateAPIView):
@@ -89,3 +136,33 @@ class UserProfileDetailView(generics.RetrieveUpdateAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+
+
+class SubscriptionViewSet(
+    mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet
+):
+    """Manage subscriptions in the database."""
+
+    serializer_class = SubscriptionSerializer
+    queryset = Subscription.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """Retrieve subscriptions for the authenticated user."""
+        return self.queryset.filter(user=self.request.user).order_by(
+            "-start_date"
+        )
+
+    def perform_create(self, serializer):
+        """Create a new subscription."""
+        user = self.request.user
+        cost = Subscription._meta.get_field("cost").default
+        check_balance(user, cost)
+        deduct_user_balance(user, cost)
+        serializer.save(
+            user=user,
+            cost=cost,
+            end_date=timezone.now() + timedelta(days=30),
+            is_active=True,
+        )

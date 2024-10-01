@@ -2,12 +2,18 @@
 Urls mapping for user API.
 """
 
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 
 from user import views
 
 
 app_name = "user"
+
+router = DefaultRouter()
+router.register(
+    "user/subscriptions", views.SubscriptionViewSet, basename="subscriptions"
+)
 
 urlpatterns = [
     path("create/", views.CreateUserView.as_view(), name="create"),
@@ -23,4 +29,6 @@ urlpatterns = [
         views.UserProfileDetailView.as_view(),
         name="upload-avatar",
     ),
+    path("user/add-funds/", views.AddFundsView.as_view(), name="add-funds"),
+    path("", include(router.urls), name="subscriptions"),
 ]

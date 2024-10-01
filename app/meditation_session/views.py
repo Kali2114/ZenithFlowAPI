@@ -144,7 +144,6 @@ class EnrollmentViewSet(
         session = get_object_or_404(
             models.MeditationSession, id=self.request.data.get("session")
         )
-
         if not check_user_subscription(user=self.request.user):
             raise ValidationError(
                 "You need an active subscription to enroll in this session."

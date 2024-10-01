@@ -2,6 +2,8 @@
 Tests for the user API.
 """
 
+from decimal import Decimal
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -10,6 +12,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 
 
+DEPLOY_CASH_URL = reverse("user:add-funds")
 CREATE_USER_URL = reverse("user:create")
 TOKEN_URL = reverse("user:token")
 ME_URL = reverse("user:me")
@@ -137,3 +140,22 @@ class PrivateUserApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(self.user.name, payload["name"])
         self.assertTrue(self.user.check_password(payload["password"]))
+
+    def test_add_cash_successful(self):
+        """Test adding cash successful."""
+        payload = {"amount": 100.40}
+        res = self.client.post(DEPLOY_CASH_URL, payload)
+
+        self.user.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            self.user.cash_balance, Decimal(str(payload["amount"]))
+        )
+
+    def test_add_invalid_funds_fails(self):
+        """Test adding invalid funds fails."""
+        payload = {"amount": -50}
+        res = self.client.post(DEPLOY_CASH_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(self.user.cash_balance, 0)

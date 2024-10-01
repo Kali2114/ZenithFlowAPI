@@ -1,5 +1,5 @@
 """
-Utils function for app.
+Utils functions for meditation session app.
 """
 
 from rest_framework.exceptions import PermissionDenied

@@ -9,7 +9,7 @@ from django.contrib.auth import (
 from django.utils.translation import gettext as _
 from rest_framework import serializers
 
-from core.models import UserProfile
+from core.models import UserProfile, Subscription
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -86,3 +86,19 @@ class UserAvatarSerializer(serializers.ModelSerializer):
         fields = ["id", "avatar"]
         read_only_fields = ["id"]
         extra_kwargs = {"avatar": {"required": "False"}}
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    """Serializer for subscriptions."""
+
+    class Meta:
+        model = Subscription
+        fields = ["id", "user", "start_date", "end_date", "cost", "is_active"]
+        read_only_fields = [
+            "id",
+            "user",
+            "start_date",
+            "end_date",
+            "cost",
+            "is_active",
+        ]

@@ -2,6 +2,8 @@
 Tests for enrollment API.
 """
 
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -64,7 +66,12 @@ def create_meditation_session(**params):
 
 def create_subscription(user):
     """Create and return a subscription for user."""
-    return Subscription.objects.create(user=user)
+    return Subscription.objects.create(
+        user=user,
+        start_date=timezone.now(),
+        end_date=timezone.now() + timedelta(days=30),
+        is_active=True,
+    )
 
 
 class PublicEnrollmentApiTests(TestCase):
