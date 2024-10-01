@@ -16,6 +16,7 @@ from meditation_session import serializers
 from meditation_session.utils import (
     check_user_is_instructor,
     check_user_is_creator,
+    check_user_subscription,
 )
 from rest_framework.response import Response
 
@@ -143,6 +144,12 @@ class EnrollmentViewSet(
         session = get_object_or_404(
             models.MeditationSession, id=self.request.data.get("session")
         )
+
+        if not check_user_subscription(user=self.request.user):
+            raise ValidationError(
+                "You need an active subscription to enroll in this session."
+            )
+
         try:
             serializer.save(user=self.request.user, session=session)
         except IntegrityError:

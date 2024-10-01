@@ -32,3 +32,13 @@ def check_user_is_creator(user, instance):
             raise PermissionDenied(
                 "You do not have permission to modify this technique."
             )
+
+
+def check_user_subscription(user):
+    """Check that user have active subscription."""
+    subscription = models.Subscription.objects.filter(
+        user=user, is_active=True
+    )
+    if subscription:
+        return True
+    return False

@@ -194,3 +194,15 @@ class ModelTests(TestCase):
         file_path = models.avatar_file_path(None, "example.jpg")
 
         self.assertEqual(file_path, f"uploads/avatar/{uuid}.jpg")
+
+    def test_create_subscription(self):
+        """Test creating subscription for user succesfful."""
+        user = create_user(email="test@example.com", name="Test User")
+        start_date = timezone.now()
+        end_date = start_date + timezone.timedelta(days=30)
+
+        subscription = models.Subscription.objects.create(
+            user=user, start_date=start_date, end_date=end_date, is_active=True
+        )
+
+        self.assertEqual(str(subscription), f"Subscription for {user.email}")

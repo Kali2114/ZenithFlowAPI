@@ -9,7 +9,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import MeditationSession, Enrollment
+from core.models import MeditationSession, Enrollment, Subscription
 from meditation_session.serializers import (
     EnrollmentSerializer,
     EnrollmentDetailSerializer,
@@ -62,6 +62,11 @@ def create_meditation_session(**params):
     return MeditationSession.create(**meditation_session)
 
 
+def create_subscription(user):
+    """Create and return a subscription for user."""
+    return Subscription.objects.create(user=user)
+
+
 class PublicEnrollmentApiTests(TestCase):
     """Test unauthenticated API request."""
 
@@ -81,6 +86,7 @@ class PrivateEnrollmentApiTests(TestCase):
     def setUp(self):
         self.user = create_user()
         self.client = APIClient()
+        self.subscription = create_subscription(user=self.user)
         self.client.force_authenticate(user=self.user)
         self.instructor = create_instructor()
         self.session = create_meditation_session(instructor=self.instructor)
@@ -213,3 +219,12 @@ class PrivateEnrollmentApiTests(TestCase):
             id=enrollment.id
         ).exists()
         self.assertTrue(enrollment_exists)
+
+    def test_create_enrollment_without_subscription_fails(self):
+        """Test creating an enrollment without an active subscription fails."""
+        self.subscription.delete()
+
+        payload = {"session": self.session.id}
+        res = self.client.post(ENROLLMENT_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
