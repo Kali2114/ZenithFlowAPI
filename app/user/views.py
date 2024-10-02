@@ -33,7 +33,11 @@ from core.models import (
     UserProfile,
     Subscription,
 )
-from user.utils import check_balance, deduct_user_balance
+from user.utils import (
+    check_balance,
+    deduct_user_balance,
+    get_active_subscription,
+)
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -155,14 +159,29 @@ class SubscriptionViewSet(
         )
 
     def perform_create(self, serializer):
-        """Create a new subscription."""
+        """Create a new subscription or extend an existing one."""
         user = self.request.user
         cost = Subscription._meta.get_field("cost").default
         check_balance(user, cost)
         deduct_user_balance(user, cost)
-        serializer.save(
-            user=user,
-            cost=cost,
-            end_date=timezone.now() + timedelta(days=30),
-            is_active=True,
-        )
+
+        active_subscription = get_active_subscription(user)
+        if active_subscription:
+            active_subscription.end_date += timedelta(days=30)
+            active_subscription.save()
+            return Response(
+                {"detail": "Subscription has been extended successfully."},
+            )
+        else:
+            serializer.save(
+                user=user,
+                cost=cost,
+                end_date=timezone.now() + timedelta(days=30),
+                is_active=True,
+            )
+            return Response(
+                {
+                    "detail": "Subscription purchased successfully.",
+                    "subscription": serializer.data,
+                },
+            )

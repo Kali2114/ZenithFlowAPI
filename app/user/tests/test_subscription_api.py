@@ -103,7 +103,7 @@ class PrivateApiTests(TestCase):
         """Test that buy a subscription by auth user is successful."""
         initial_balance = self.user.cash_balance
         res = self.client.post(SUBSCRIPTION_URL)
-        subscription = Subscription.objects.filter(user=self.user).first()
+        subscription = self.user.subscription.first()
         expected_balance = Decimal(initial_balance) - subscription.cost
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
@@ -146,3 +146,36 @@ class PrivateApiTests(TestCase):
         res = self.client.delete(SUBSCRIPTION_URL)
 
         self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_extend_subscription_instead_of_creating_new(self):
+        """Test that subscription is extended instead of creating a new one."""
+        subscription = create_subscription(user=self.user)
+        res = self.client.post(SUBSCRIPTION_URL)
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        subscription.refresh_from_db()
+        self.assertEqual(self.user.subscription.count(), 1)
+        expected_end_date = timezone.now() + timedelta(days=60)
+        self.assertEqual(
+            subscription.end_date.date(), expected_end_date.date()
+        )
+
+    def test_buy_new_subscription_after_previous_expiration(self):
+        """Test that a new subscription is
+        created after the previous one expires."""
+        subscription = create_subscription(user=self.user)
+        subscription.end_date = timezone.now() - timedelta(days=2)
+        subscription.save()
+        check_expired_subscriptions()
+        res = self.client.post(SUBSCRIPTION_URL)
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        subscription.refresh_from_db()
+        self.assertEqual(self.user.subscription.count(), 2)
+        new_subscription = Subscription.objects.filter(
+            user=self.user, is_active=True
+        ).first()
+        expected_end_date = timezone.now() + timedelta(days=30)
+        self.assertEqual(
+            new_subscription.end_date.date(), expected_end_date.date()
+        )

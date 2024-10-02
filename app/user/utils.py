@@ -30,3 +30,8 @@ def check_expired_subscriptions():
     for subscription in expired_subscriptions:
         subscription.is_active = False
         subscription.save()
+
+
+def get_active_subscription(user):
+    """Get the active subscription for the user or return None if not found."""
+    return user.subscription.filter(is_active=True).first()
