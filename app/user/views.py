@@ -154,8 +154,10 @@ class SubscriptionViewSet(
 
     def get_queryset(self):
         """Retrieve subscriptions for the authenticated user."""
-        return self.queryset.filter(user=self.request.user).order_by(
-            "-start_date"
+        return (
+            self.queryset.filter(user=self.request.user)
+            .select_related("user")
+            .order_by("-start_date")
         )
 
     def perform_create(self, serializer):
