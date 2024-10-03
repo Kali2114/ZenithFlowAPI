@@ -30,5 +30,6 @@ urlpatterns = [
         name="upload-avatar",
     ),
     path("user/add-funds/", views.AddFundsView.as_view(), name="add-funds"),
+    path("reports/", views.PDFReportView.as_view(), name="pdf-report"),
     path("", include(router.urls), name="subscriptions"),
 ]

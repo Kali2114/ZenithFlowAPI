@@ -2,8 +2,11 @@
 Views for user API.
 """
 
+from reportlab.pdfgen import canvas
+
 from datetime import timedelta
 
+from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework import (
     generics,
@@ -22,6 +25,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
+
 from user.serializers import (
     UserSerializer,
     UserProfileSerializer,
@@ -38,6 +42,7 @@ from user.utils import (
     deduct_user_balance,
     get_active_subscription,
 )
+from meditation_session.utils import check_user_is_instructor
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -187,3 +192,46 @@ class SubscriptionViewSet(
                     "subscription": serializer.data,
                 },
             )
+
+
+class PDFReportView(APIView):
+    """View for generating PDF report for instructors."""
+
+    def get(self, request, *args, **kwargs):
+        check_user_is_instructor(request.user)
+        subscriptions = Subscription.objects.all().select_related("user")
+
+        response = HttpResponse(content_type="application/pdf")
+        response["Content-Disposition"] = (
+            'inline; filename="subscriptions_report.pdf"'
+        )
+
+        p = canvas.Canvas(response)
+        p.drawString(100, 800, "Report: Users subscription")
+
+        y_position = 750
+
+        p.drawString(50, y_position, "Username")
+        p.drawString(150, y_position, "Start Date")
+        p.drawString(250, y_position, "End Date")
+        p.drawString(350, y_position, "Cost")
+        p.drawString(450, y_position, "Active")
+
+        y_position -= 20
+
+        for sub in subscriptions:
+            p.drawString(50, y_position, sub.user.email)
+            p.drawString(150, y_position, str(sub.start_date))
+            p.drawString(250, y_position, str(sub.end_date))
+            p.drawString(350, y_position, f"{sub.cost:.2f} PLN")
+            p.drawString(450, y_position, "Yes" if sub.is_active else "No")
+            y_position -= 20
+
+            if y_position < 100:
+                p.showPage()
+                y_position = 750
+
+        p.showPage()
+        p.save()
+
+        return response
