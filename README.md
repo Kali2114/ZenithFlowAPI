@@ -1,4 +1,5 @@
-****# ZenithFlow
+
+# ZenithFlow
 ZenithFlow is a meditation and self-development platform designed to help users achieve mindfulness and personal growth. Built with modern technologies such as Django, REST API, Celery, Redis, and integrated with AWS, the application provides a seamless and scalable experience for hosting meditation sessions, tracking progress, and managing user subscriptions.
 
 ## Table of Contents
@@ -10,7 +11,7 @@ ZenithFlow is a meditation and self-development platform designed to help users 
 - [Testing](#testing)
 - [Contributing](#contributing)
 - [License](#license)
-
+- [Reports](#reports)
 
 ## Features
 - User Registration & Authentication: Users can sign up, log in, and manage their profiles, including uploading avatars.
@@ -105,6 +106,12 @@ Once the app is running, you can access the API at http://localhost:8000.
 * POST /sessions/<int:session_id>/ratings/ - Rate a session
 * GET /sessions/<int:session_id>/ratings/ - Get session ratings
 
+### Reports:
+
+* **GET /api/user/reports/** - Generate a PDF report of user subscriptions for instructors (requires authentication).
+  - **Authorization**: This endpoint requires a valid token in the header.
+  - **Response**: Returns a PDF document containing a report of users' subscriptions.
+
 ## Testing
 ZenithFlow follows Test-Driven Development (TDD), with over 100 tests to ensure functionality. To run tests, use the following command:
 
@@ -124,4 +131,4 @@ Contributions are welcome! If you'd like to contribute:
 Please make sure your code adheres to the project’s coding standards and passes all tests.
 
 ## License
-This project is licensed under the GPL-3.0 License. See the LICENSE file for more details.****
+This project is licensed under the GPL-3.0 License. See the LICENSE file for more details.

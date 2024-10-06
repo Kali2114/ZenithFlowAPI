@@ -21,8 +21,6 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 
@@ -73,8 +71,8 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
 class AddFundsView(APIView):
     """View to allow users to add funds to their account."""
 
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
         """Add funds to the authenticated user's account."""
@@ -111,8 +109,8 @@ class UserProfileDetailView(generics.RetrieveUpdateAPIView):
 
     serializer_class = UserProfileSerializer
     queryset = UserProfile.objects.all()
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         """Retrieve profile for authenticated user."""
@@ -154,8 +152,8 @@ class SubscriptionViewSet(
 
     serializer_class = SubscriptionSerializer
     queryset = Subscription.objects.all()
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         """Retrieve subscriptions for the authenticated user."""
@@ -196,6 +194,9 @@ class SubscriptionViewSet(
 
 class PDFReportView(APIView):
     """View for generating PDF report for instructors."""
+
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         check_user_is_instructor(request.user)
