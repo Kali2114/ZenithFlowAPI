@@ -196,7 +196,7 @@ class ModelTests(TestCase):
         self.assertEqual(file_path, f"uploads/avatar/{uuid}.jpg")
 
     def test_create_subscription(self):
-        """Test creating subscription for user succesfful."""
+        """Test creating subscription for user successful."""
         user = create_user(email="test@example.com", name="Test User")
         start_date = timezone.now()
         end_date = start_date + timezone.timedelta(days=30)
@@ -206,3 +206,16 @@ class ModelTests(TestCase):
         )
 
         self.assertEqual(str(subscription), f"Subscription for {user.email}")
+
+    def test_create_message(self):
+        """Test creating a message successful."""
+        sender = create_user(email="sender@example.com", name="Sender")
+        receiver = create_user(email="receiver@example.com", name="Receiver")
+
+        message = models.Message.objects.create(
+            sender=sender, receiver=receiver, content="Test content."
+        )
+
+        self.assertEqual(
+            str(message), f"From {sender} to {receiver} at {message.timestamp}"
+        )

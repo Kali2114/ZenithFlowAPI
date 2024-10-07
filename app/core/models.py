@@ -215,3 +215,20 @@ class Subscription(models.Model):
 
     def __str__(self):
         return f"Subscription for {self.user.email}"
+
+
+class Message(models.Model):
+    """Model for message object."""
+
+    receiver = models.ForeignKey(
+        "User", on_delete=models.CASCADE, related_name="received_messages"
+    )
+    sender = models.ForeignKey(
+        "User", on_delete=models.CASCADE, related_name="sent_messages"
+    )
+    content = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"From {self.sender} to {self.receiver} at {self.timestamp}"
