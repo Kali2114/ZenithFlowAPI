@@ -9,7 +9,7 @@ from django.contrib.auth import (
 from django.utils.translation import gettext as _
 from rest_framework import serializers
 
-from core.models import UserProfile, Subscription
+from core.models import UserProfile, Subscription, Message
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -102,3 +102,24 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             "cost",
             "is_active",
         ]
+
+
+class MessageSerializer(serializers.ModelSerializer):
+    """Serializer for the message object."""
+
+    sender = serializers.ReadOnlyField(source="sender.id")
+    receiver = serializers.PrimaryKeyRelatedField(
+        queryset=get_user_model().objects.all()
+    )
+
+    class Meta:
+        model = Message
+        fields = [
+            "id",
+            "sender",
+            "receiver",
+            "content",
+            "timestamp",
+            "is_read",
+        ]
+        read_only_fields = ["id", "sender", "timestamp", "is_read"]

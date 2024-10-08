@@ -30,11 +30,9 @@ from user.serializers import (
     AuthTokenSerializer,
     UserAvatarSerializer,
     SubscriptionSerializer,
+    MessageSerializer,
 )
-from core.models import (
-    UserProfile,
-    Subscription,
-)
+from core.models import UserProfile, Subscription, Message
 from user.utils import (
     check_balance,
     deduct_user_balance,
@@ -236,3 +234,25 @@ class PDFReportView(APIView):
         p.save()
 
         return response
+
+
+class MessageViewSet(viewsets.ModelViewSet):
+    """Manage messages in the database."""
+
+    serializer_class = MessageSerializer
+    queryset = Message.objects.all().order_by("-timestamp")
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Retrieve messages for the authenticated users."""
+        user = self.request.user
+        return Message.objects.filter(sender=user) | Message.objects.filter(
+            receiver=user
+        ).order_by("-timestamp")
+
+    def perform_create(self, serializer):
+        """Create a new message with sender set to the request user."""
+        if serializer.validated_data["receiver"] == self.request.user:
+            raise PermissionDenied("You cannot send a message to yourself.")
+        serializer.save(sender=self.request.user)

@@ -62,7 +62,7 @@ class PublicReportTests(TestCase):
         """Test that auth is required to generate report."""
         res = self.client.get(REPORT_URL)
 
-        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class UserReportTests(TestCase):

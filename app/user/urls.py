@@ -12,7 +12,14 @@ app_name = "user"
 
 router = DefaultRouter()
 router.register(
-    "user/subscriptions", views.SubscriptionViewSet, basename="subscriptions"
+    "user/subscriptions",
+    views.SubscriptionViewSet,
+    basename="subscriptions",
+)
+router.register(
+    "user/messages/",
+    views.MessageViewSet,
+    basename="messages",
 )
 
 urlpatterns = [
