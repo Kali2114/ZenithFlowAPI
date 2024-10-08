@@ -219,3 +219,18 @@ class ModelTests(TestCase):
         self.assertEqual(
             str(message), f"From {sender} to {receiver} at {message.timestamp}"
         )
+
+    def test_create_instructor_rating(self):
+        """Test creating a instructor rating successful."""
+        user = create_user(email="user@example.com", name="User")
+        instructor = create_instructor(
+            email="instructor@example.com", name="Instructor"
+        )
+        rating = models.InstructorRating.objects.create(
+            user=user, instructor=instructor, rating=5, comment="Test Comment"
+        )
+
+        self.assertEqual(
+            str(rating),
+            f"Rating for {instructor} from {user} at {rating.created_at}",
+        )

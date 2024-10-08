@@ -232,3 +232,23 @@ class Message(models.Model):
 
     def __str__(self):
         return f"From {self.sender} to {self.receiver} at {self.timestamp}"
+
+
+class InstructorRating(models.Model):
+    """Model for instructor rating object."""
+
+    user = models.ForeignKey(
+        "User", on_delete=models.CASCADE, related_name="give_ratings"
+    )
+    instructor = models.ForeignKey(
+        "User", on_delete=models.CASCADE, related_name="receive_ratings"
+    )
+    rating = models.SmallIntegerField()
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return (
+            f"Rating for {self.instructor} "
+            f"from {self.user} at {self.created_at}"
+        )

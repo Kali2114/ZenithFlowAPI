@@ -46,21 +46,12 @@ def check_sessions_for_reminder():
         f"{timezone.now().date() + timedelta(days=1)}"
     )
     tomorrow = timezone.now().date() + timedelta(days=1)
-    print(f"Checking sessions for date: {tomorrow}")
     upcoming_session = MeditationSession.objects.filter(
         start_time__date=tomorrow
     )
 
     for session in upcoming_session:
         logger.info(f"Found session: {session.name}")
-        print(f"Found session: {session.name}")
         users = User.objects.filter(enrollments__session=session)
         for user in users:
-            print(f"Sending reminder to {user.email}")
             send_email_reminder(user.email, session)
-
-
-# @shared_task()
-# def check_sessions_for_reminder():
-#     """Testowa wersja taska."""
-#     send_email_reminder('test@example.com', 'TestSession')

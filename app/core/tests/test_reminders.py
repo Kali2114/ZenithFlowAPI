@@ -40,27 +40,17 @@ class TestReminderTask(TestCase):
 
     # TODO configure celery
 
-    # @patch('config.tasks.send_email_reminder')
-    # def test_reminder_sent_for_upcoming_sessions(self, mock_send_email):
-    #
-    #     tomorrow = timezone.now() + timedelta(days=1)
-    #     session = MeditationSession.objects.create(
-    #         name="Test Session",
-    #         description="Test description",
-    #         duration=60,
-    #         start_time=tomorrow,
-    #         instructor=self.instructor,
-    #     )
-    #
-    #     check_sessions_for_reminder()
-    #     print("Czy send_email_reminder
-    #     zostało wywołane:", mock_send_email.called)
-    #     self.assertTrue(mock_send_email.called)
-
-    @patch("config.tasks.send_email_reminder.delay")
+    @patch("config.tasks.send_email_reminder")
     def test_reminder_sent_for_upcoming_sessions(self, mock_send_email):
-        check_sessions_for_reminder()
-        print(
-            "Czy send_email_reminder zostało wywołane:", mock_send_email.called
+
+        tomorrow = timezone.now() + timedelta(days=1)
+        MeditationSession.objects.create(
+            name="Test Session1",
+            description="Test description",
+            duration=60,
+            start_time=tomorrow,
+            instructor=self.instructor,
         )
+
+        check_sessions_for_reminder()
         self.assertTrue(mock_send_email.called)
