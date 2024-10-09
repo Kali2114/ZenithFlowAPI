@@ -16,6 +16,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Set up Docker Compose environment
+        run: |
+          export DB_HOST=${{ secrets.DB_HOST }}
+          export DB_NAME=${{ secrets.DB_NAME }}
+          export DB_USER=${{ secrets.DB_USER }}
+          export DB_PASS=${{ secrets.DB_PASS }}
+          export REDIS_HOST=${{ secrets.REDIS_HOST }}
+          export REDIS_PORT=${{ secrets.REDIS_PORT }}
+          export POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+          export POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+          export POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          
+          docker compose up -d db redis
+          sleep 10 
+
       - name: List files for debugging
         run: docker compose run --rm app sh -c "ls -R /app"
 
