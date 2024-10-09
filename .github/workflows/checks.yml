@@ -16,9 +16,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: List files for debugging
-        run: docker compose run --rm app sh -c "ls -R /app"
-
       - name: Set Environment Variables
         run: |
           echo DB_HOST=${{ secrets.DB_HOST }} >> .env
