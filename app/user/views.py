@@ -31,8 +31,14 @@ from user.serializers import (
     UserAvatarSerializer,
     SubscriptionSerializer,
     MessageSerializer,
+    InstructorRatingSerializer,
 )
-from core.models import UserProfile, Subscription, Message
+from core.models import (
+    UserProfile,
+    Subscription,
+    Message,
+    InstructorRating,
+)
 from user.utils import (
     check_balance,
     deduct_user_balance,
@@ -236,7 +242,12 @@ class PDFReportView(APIView):
         return response
 
 
-class MessageViewSet(viewsets.ModelViewSet):
+class MessageViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
     """Manage messages in the database."""
 
     serializer_class = MessageSerializer
@@ -256,3 +267,29 @@ class MessageViewSet(viewsets.ModelViewSet):
         if serializer.validated_data["receiver"] == self.request.user:
             raise PermissionDenied("You cannot send a message to yourself.")
         serializer.save(sender=self.request.user)
+
+
+class InstructorRatingViewSet(viewsets.ModelViewSet):
+    """Manage instructor ratings in the database."""
+
+    serializer_class = InstructorRatingSerializer
+    queryset = InstructorRating.objects.all()
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Retrieve ratings depending on the user context."""
+        user = self.request.user
+        instructor_id = self.request.query_params.get("instructor_id")
+
+        if instructor_id:
+            return InstructorRating.objects.filter(
+                instructor=instructor_id
+            ).order_by("-created_at")
+        return InstructorRating.objects.filter(user=user).order_by(
+            "-created_at"
+        )
+
+    def perform_create(self, serializer):
+        """Create a new instructor rating"""
+        serializer.save(user=self.request.user)

@@ -17,9 +17,14 @@ router.register(
     basename="subscriptions",
 )
 router.register(
-    "user/messages/",
+    "user/messages",
     views.MessageViewSet,
     basename="messages",
+)
+router.register(
+    "user/instructor_ratings",
+    views.InstructorRatingViewSet,
+    basename="instructor_ratings",
 )
 
 urlpatterns = [
@@ -38,5 +43,5 @@ urlpatterns = [
     ),
     path("user/add-funds/", views.AddFundsView.as_view(), name="add-funds"),
     path("reports/", views.PDFReportView.as_view(), name="pdf-report"),
-    path("", include(router.urls), name="subscriptions"),
+    path("", include(router.urls)),
 ]

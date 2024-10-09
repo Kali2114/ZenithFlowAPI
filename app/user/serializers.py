@@ -9,7 +9,12 @@ from django.contrib.auth import (
 from django.utils.translation import gettext as _
 from rest_framework import serializers
 
-from core.models import UserProfile, Subscription, Message
+from core.models import (
+    UserProfile,
+    Subscription,
+    Message,
+    InstructorRating,
+)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -123,3 +128,35 @@ class MessageSerializer(serializers.ModelSerializer):
             "is_read",
         ]
         read_only_fields = ["id", "sender", "timestamp", "is_read"]
+
+
+class InstructorRatingSerializer(serializers.ModelSerializer):
+    """Serializer for the instructor rating object."""
+
+    class Meta:
+        model = InstructorRating
+        fields = [
+            "id",
+            "user",
+            "instructor",
+            "rating",
+            "comment",
+            "created_at",
+        ]
+        read_only_fields = ["id", "user", "created_at"]
+
+    def validate_rating(self, value):
+        """Validate the rating value to ensure it is between 1 and 5."""
+        if value <= 0 or value > 5:
+            raise serializers.ValidationError(
+                "Rating must be between 1 and 5."
+            )
+        return value
+
+    def validate_comment(self, value):
+        """Validate that the comment has at least 6 characters"""
+        if len(value) < 6:
+            raise serializers.ValidationError(
+                "Comment must have at least 6 characters."
+            )
+        return value

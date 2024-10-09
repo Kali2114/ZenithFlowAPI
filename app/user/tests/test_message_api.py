@@ -16,6 +16,14 @@ from user.serializers import MessageSerializer
 MESSAGE_URL = reverse("user:messages-list")
 
 
+def detail_url(message_id):
+    """Create and return a detail url for message."""
+    return reverse(
+        "user:messages-detail",
+        args=[message_id],
+    )
+
+
 def create_user(**params):
     """Create and return a new user."""
     default_user = {
@@ -103,3 +111,27 @@ class PrivateMessageApiTests(TestCase):
         res = self.client.post(MESSAGE_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_edit_message_not_allowed(self):
+        """Test that editing a message is not allowed."""
+        message = Message.objects.create(
+            sender=self.sender,
+            receiver=self.receiver,
+            content="Original message",
+        )
+        payload = {"content": "Edited message"}
+        url = detail_url(message.id)
+        res = self.client.patch(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_delete_message_not_allowed(self):
+        """Test that deleting a message is not allowed."""
+        message = Message.objects.create(
+            sender=self.sender,
+            receiver=self.receiver,
+            content="Message to delete",
+        )
+        url = detail_url(message.id)
+        res = self.client.delete(url)
+        self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
