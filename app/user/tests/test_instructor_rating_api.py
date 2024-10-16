@@ -5,12 +5,17 @@ Tests for instructor rating API.
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.test import TestCase
+from django.utils import timezone
 
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from core.models import InstructorRating
 from user.serializers import InstructorRatingSerializer
+from core.models import (
+    MeditationSession,
+    Enrollment,
+    InstructorRating,
+)
 
 
 INSTRUCTOR_RATING_URL = reverse("user:instructor_ratings-list")
@@ -38,6 +43,23 @@ def create_instructor(**params):
     default_instructor.update(params)
 
     return get_user_model().objects.create(**default_instructor)
+
+
+def create_meditation_session(**params):
+    """Create and return a meditation session."""
+    meditation_session = {
+        "name": "Mindful Morning",
+        "description": "Test description",
+        "duration": 40,
+        "start_time": timezone.now(),
+    }
+    meditation_session.update(**params)
+    return MeditationSession.create(**meditation_session)
+
+
+def create_enrollment(**params):
+    """Create and return an enrollment."""
+    return Enrollment.objects.create(**params)
 
 
 class PublicInstructorRatingApi(TestCase):
@@ -120,7 +142,7 @@ class PrivateInstructorRatingApi(TestCase):
 
         res = self.client.get(
             INSTRUCTOR_RATING_URL,
-            {"filter": "for_instructor", "instructor_id": self.instructor.id},
+            {"instructor_id": self.instructor.id},
         )
 
         ratings = InstructorRating.objects.filter(
@@ -130,3 +152,67 @@ class PrivateInstructorRatingApi(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data["results"], serializer.data)
+
+    def create_instructor_rating_with_successful_enrollment(self):
+        """Test that create a new instructor
+         rating by user with enrollment is success."""
+        meditation_session = create_meditation_session(
+            instructor=self.instructor
+        )
+        create_enrollment(
+            user=self.user,
+            session=meditation_session,
+        )
+        res = self.client.post(
+            INSTRUCTOR_RATING_URL,
+            {
+                "instructor": self.instructor.id,
+                "rating": 5,
+                "comment": "Very good instructor",
+            },
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        rating = InstructorRating.objects.filter(
+            instructor=self.instructor.id, user=self.user
+        )
+        self.assertTrue(rating.exists())
+        self.assertEqual(rating.user, self.user)
+
+    def test_create_instructor_rating_without_enrollment_fails(self):
+        """Test that creating an instructor rating without enrollment fails."""
+        res = self.client.post(
+            INSTRUCTOR_RATING_URL,
+            {
+                "instructor": self.instructor.id,
+                "rating": 4,
+                "comment": "Great!",
+            },
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        rating_exists = InstructorRating.objects.filter(
+            instructor=self.instructor.id, user=self.user
+        ).exists()
+        self.assertFalse(rating_exists)
+
+    def test_create_instructor_rating_with_short_comment_fails(self):
+        """Test that creating an instructor
+        rating with a short comment fails."""
+        meditation_session = create_meditation_session(
+            instructor=self.instructor
+        )
+        create_enrollment(
+            user=self.user,
+            session=meditation_session,
+        )
+        res = self.client.post(
+            INSTRUCTOR_RATING_URL,
+            {"instructor": self.instructor.id, "rating": 4, "comment": "Bad"},
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        rating_exists = InstructorRating.objects.filter(
+            instructor=self.instructor.id, user=self.user
+        ).exists()
+        self.assertFalse(rating_exists)

@@ -43,6 +43,7 @@ from user.utils import (
     check_balance,
     deduct_user_balance,
     get_active_subscription,
+    check_user_attended_instructor_session,
 )
 from meditation_session.utils import check_user_is_instructor
 
@@ -292,4 +293,6 @@ class InstructorRatingViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Create a new instructor rating"""
+        instructor = serializer.validated_data["instructor"]
+        check_user_attended_instructor_session(self.request.user, instructor)
         serializer.save(user=self.request.user)

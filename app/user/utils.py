@@ -5,7 +5,10 @@ Utils functions for user app.
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from core.models import Subscription
+from core.models import (
+    Subscription,
+    Enrollment,
+)
 
 
 def check_balance(user, sub_cost):
@@ -35,3 +38,17 @@ def check_expired_subscriptions():
 def get_active_subscription(user):
     """Get the active subscription for the user or return None if not found."""
     return user.subscription.filter(is_active=True).first()
+
+
+def check_user_attended_instructor_session(user, instructor):
+    """Check if the given user has attended
+    any session conducted by the specified instructor."""
+    enrollment = Enrollment.objects.filter(
+        user=user,
+        session__instructor=instructor,
+        session__is_completed=True,
+    ).exists()
+    if not enrollment:
+        raise ValidationError(
+            "You must have at last one session with this instructor."
+        )

@@ -22,8 +22,6 @@ services:
       - DB_PASS=${DB_PASS}
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
-    env_file:
-      - .env
     depends_on:
       - db
       - redis
