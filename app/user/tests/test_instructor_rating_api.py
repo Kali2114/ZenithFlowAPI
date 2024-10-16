@@ -62,6 +62,13 @@ def create_enrollment(**params):
     return Enrollment.objects.create(**params)
 
 
+def detail_url(instructor_rating_id):
+    """Create and return a detail url for instructor rating."""
+    return reverse(
+        "user:instructor_ratings-detail", args=[instructor_rating_id]
+    )
+
+
 class PublicInstructorRatingApi(TestCase):
     """Test unauthenticated API requests."""
 
@@ -155,7 +162,7 @@ class PrivateInstructorRatingApi(TestCase):
 
     def create_instructor_rating_with_successful_enrollment(self):
         """Test that create a new instructor
-         rating by user with enrollment is success."""
+        rating by user with enrollment is success."""
         meditation_session = create_meditation_session(
             instructor=self.instructor
         )
@@ -216,3 +223,74 @@ class PrivateInstructorRatingApi(TestCase):
             instructor=self.instructor.id, user=self.user
         ).exists()
         self.assertFalse(rating_exists)
+
+    def test_delete_own_instructor_rating_success(self):
+        """Test that deleting a user's own instructor rating is successful."""
+        instructor_rating = InstructorRating.objects.create(
+            user=self.user,
+            instructor=self.instructor,
+            rating=5,
+            comment="The best instructor ever!",
+        )
+        url = detail_url(instructor_rating.id)
+        res = self.client.delete(url)
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        rating_exist = InstructorRating.objects.filter(
+            user=self.user, instructor=self.instructor
+        ).exists()
+        self.assertFalse(rating_exist)
+
+    def test_delete_another_user_instructor_rating_fails(self):
+        """Test that deleting a other user's instructor rating is failed."""
+        other_user = create_user(
+            email="other_user@example.com", name="Other User"
+        )
+        instructor_rating = InstructorRating.objects.create(
+            user=other_user,
+            instructor=self.instructor,
+            rating=5,
+            comment="The best instructor ever!",
+        )
+        url = detail_url(instructor_rating.id)
+        res = self.client.delete(url)
+
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+        rating_exist = InstructorRating.objects.filter(
+            user=other_user, instructor=self.instructor
+        ).exists()
+        self.assertTrue(rating_exist)
+
+    def test_update_own_instructor_rating_success(self):
+        """Test that deleting a user's own instructor rating is successful."""
+        instructor_rating = InstructorRating.objects.create(
+            user=self.user,
+            instructor=self.instructor,
+            rating=5,
+            comment="The best instructor ever!",
+        )
+        payload = {"rating": 4, "comment": "Updated comment"}
+        url = detail_url(instructor_rating.id)
+        res = self.client.patch(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        instructor_rating.refresh_from_db()
+        for k, v in payload.items():
+            self.assertEqual(getattr(instructor_rating, k), v)
+
+    def test_update_another_user_instructor_rating_fails(self):
+        """Test that deleting a other user's instructor rating is failed."""
+        other_user = create_user(
+            email="other_user@example.com", name="Other User"
+        )
+        instructor_rating = InstructorRating.objects.create(
+            user=other_user,
+            instructor=self.instructor,
+            rating=5,
+            comment="The best instructor ever!",
+        )
+        payload = {"rating": 1, "comment": "New comment."}
+        url = detail_url(instructor_rating.id)
+        res = self.client.patch(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)

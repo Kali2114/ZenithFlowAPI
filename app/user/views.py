@@ -296,3 +296,17 @@ class InstructorRatingViewSet(viewsets.ModelViewSet):
         instructor = serializer.validated_data["instructor"]
         check_user_attended_instructor_session(self.request.user, instructor)
         serializer.save(user=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        """Update only your own instructor rating."""
+        instance = self.get_object()
+        if instance.user != self.request.user:
+            raise PermissionDenied("You can only update your own ratings.")
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        """Destroy only your own instructor rating."""
+        instance = self.get_object()
+        if instance.user != self.request.user:
+            raise PermissionDenied("You can only delete your own ratings.")
+        return super().destroy(request, *args, **kwargs)
