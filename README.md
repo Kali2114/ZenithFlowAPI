@@ -18,6 +18,7 @@ ZenithFlow is a meditation and self-development platform designed to help users 
 - Meditation Sessions: Hosts (instructors) can create meditation sessions, mark them as completed, and participants can rate sessions after completion.
 - User Profiles: Each user has a profile with a customizable avatar, bio, total sessions attended, and time spent in meditation.
 - Session Ratings: Participants can rate meditation sessions, and ratings are only allowed for completed sessions.
+- Instructor Ratings: Users can rate instructors after attending their session.
 - Payment System: Only users with active subscriptions (via payments) can register for sessions.
 - AWS Integration: The app is deployed on AWS using services like EC2, RDS, S3, and ElastiCache for scalability.
 - Asynchronous Tasks: Celery with Redis is used to send notifications and handle background tasks.
@@ -85,9 +86,9 @@ Once the app is running, you can access the API at http://localhost:8000.
 
 ### User Authentication:
 
-* POST /api/user/create/ - Register a new user
-* POST /api/user/token/ - Obtain authentication token
-* GET /api/user/me/ - Manage current authenticated user
+* POST /user/create/ - Register a new user
+* POST /user/token/ - Obtain authentication token
+* GET /user/me/ - Manage current authenticated user
 
 ### User Profiles:
 
@@ -96,15 +97,34 @@ Once the app is running, you can access the API at http://localhost:8000.
 
 ### Meditation Sessions:
 
-* POST /sessions/ - Create a new session (instructor only)
-* GET /sessions/ - List all sessions
-* PATCH /sessions/<int:pk>/complete-session/ - Mark a session as completed
-* POST /sessions/<int:pk>/add-technique/ - Add a technique to a session
+* POST /meditations_session/sessions/ - Create a new session (instructor only)
+* GET /meditations_session/sessions/ - List all sessions
+* PATCH /meditations_session/sessions/<int:pk>/complete-session/ - Mark a session as completed
+* POST /meditations_session/sessions/<int:pk>/add-technique/ - Add a technique to a session
+* DELETE /meditations_session/sessions/int:pk/ - Delete a meditation session (only creator)
 
-### Ratings:
+### Session Ratings:
 
-* POST /sessions/<int:session_id>/ratings/ - Rate a session
-* GET /sessions/<int:session_id>/ratings/ - Get session ratings
+* POST /meditations_session/sessions/<int:session_id>/ratings/ - Rate a session
+* GET /meditations_session/sessions/<int:session_id>/ratings/ - Get session ratings
+
+### Instructor Ratings:
+
+* POST /user/instructor_ratings/ - Rate an instructor
+* GET /user/instructor_ratings/ - List instructor ratings
+* PATCH /user/instructor_ratings/<int:instructor_id>/<int:instructor_rating_id>/
+* DELETE /user/instructor_ratings/<int:instructor_id>/<int:instructor_rating_id>/ - Delete a rating (only by the author)
+
+### Techniques:
+
+* POST /meditation_session/techniques/ - Create a new technique (instructor only)
+* GET /meditation_session/techniques/ - List all techniques
+* PATCH /meditation_session/techniques/<int:pk>/ - Update a technique (only by creator)
+* DELETE /meditation_session/techniques/<int:pk>/ - Delete a technique (only by creator)
+
+### Calendar View:
+
+* GET /meditation_session/calendar/ - List meditation sessions based on optional date filters
 
 ### Reports:
 

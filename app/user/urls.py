@@ -43,5 +43,12 @@ urlpatterns = [
     ),
     path("user/add-funds/", views.AddFundsView.as_view(), name="add-funds"),
     path("reports/", views.PDFReportView.as_view(), name="pdf-report"),
+    path(
+        "user/instructor_ratings/<int:instructor_id>/<int:pk>",
+        views.InstructorRatingViewSet.as_view(
+            {"patch": "update", "delete": "destroy"}
+        ),
+        name="instructor_ratings_detail",
+    ),
     path("", include(router.urls)),
 ]

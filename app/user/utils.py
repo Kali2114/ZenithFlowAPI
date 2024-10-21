@@ -3,7 +3,10 @@ Utils functions for user app.
 """
 
 from django.utils import timezone
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import (
+    ValidationError,
+    PermissionDenied,
+)
 
 from core.models import (
     Subscription,
@@ -52,3 +55,11 @@ def check_user_attended_instructor_session(user, instructor):
         raise ValidationError(
             "You must have at last one session with this instructor."
         )
+
+
+def check_user_can_modify_instructor_rating(instance, user, instructor_id):
+    """Check if the user can modify or delete a given instructor rating."""
+    if instance.instructor.id != instructor_id:
+        raise PermissionDenied("Instructor ID missmatch.")
+    if instance.user != user:
+        raise PermissionDenied("You can only update your own ratings.")

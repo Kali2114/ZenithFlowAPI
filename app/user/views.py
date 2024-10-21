@@ -6,6 +6,8 @@ from reportlab.pdfgen import canvas
 
 from datetime import timedelta
 
+from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework import (
@@ -44,6 +46,7 @@ from user.utils import (
     deduct_user_balance,
     get_active_subscription,
     check_user_attended_instructor_session,
+    check_user_can_modify_instructor_rating,
 )
 from meditation_session.utils import check_user_is_instructor
 
@@ -259,9 +262,11 @@ class MessageViewSet(
     def get_queryset(self):
         """Retrieve messages for the authenticated users."""
         user = self.request.user
-        return Message.objects.filter(sender=user) | Message.objects.filter(
-            receiver=user
-        ).order_by("-timestamp")
+        return (
+            Message.objects.filter(Q(sender=user) | Q(receiver=user))
+            .select_related("sender", "receiver")
+            .order_by("-timestamp")
+        )
 
     def perform_create(self, serializer):
         """Create a new message with sender set to the request user."""
@@ -278,15 +283,26 @@ class InstructorRatingViewSet(viewsets.ModelViewSet):
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_object(self):
+        """Retrieve and return the instructor rating
+        for the given instructor and rating ID."""
+        instructor_id = self.kwargs.get("instructor_id")
+        rating_id = self.kwargs.get("pk")
+        return get_object_or_404(
+            InstructorRating, instructor_id=instructor_id, id=rating_id
+        )
+
     def get_queryset(self):
         """Retrieve ratings depending on the user context."""
         user = self.request.user
         instructor_id = self.request.query_params.get("instructor_id")
 
         if instructor_id:
-            return InstructorRating.objects.filter(
-                instructor=instructor_id
-            ).order_by("-created_at")
+            return (
+                InstructorRating.objects.filter(instructor=instructor_id)
+                .select_related("user", "instructor")
+                .order_by("-created_at")
+            )
         return InstructorRating.objects.filter(user=user).order_by(
             "-created_at"
         )
@@ -300,13 +316,23 @@ class InstructorRatingViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         """Update only your own instructor rating."""
         instance = self.get_object()
-        if instance.user != self.request.user:
-            raise PermissionDenied("You can only update your own ratings.")
-        return super().update(request, *args, **kwargs)
+        instructor_id = kwargs.get("instructor_id")
+        check_user_can_modify_instructor_rating(
+            instance, request.user, instructor_id
+        )
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
         """Destroy only your own instructor rating."""
         instance = self.get_object()
-        if instance.user != self.request.user:
-            raise PermissionDenied("You can only delete your own ratings.")
+        instructor_id = kwargs.get("instructor_id")
+        check_user_can_modify_instructor_rating(
+            instance, request.user, instructor_id
+        )
         return super().destroy(request, *args, **kwargs)
