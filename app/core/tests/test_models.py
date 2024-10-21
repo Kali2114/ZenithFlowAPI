@@ -221,7 +221,7 @@ class ModelTests(TestCase):
         )
 
     def test_create_instructor_rating(self):
-        """Test creating a instructor rating successful."""
+        """Test creating an instructor rating successful."""
         user = create_user(email="user@example.com", name="User")
         instructor = create_instructor(
             email="instructor@example.com", name="Instructor"
@@ -233,4 +233,13 @@ class ModelTests(TestCase):
         self.assertEqual(
             str(rating),
             f"Rating for {instructor} from {user} at {rating.created_at}",
+        )
+
+    def test_create_panel_admin(self):
+        """Test creating panel admin for instructors successful."""
+        instructor = create_instructor()
+        admin_panel = models.PanelAdmin.objects.create(instructor=instructor)
+
+        self.assertEqual(
+            str(admin_panel), f"Admin Panel for {instructor.name}"
         )

@@ -252,3 +252,14 @@ class InstructorRating(models.Model):
             f"Rating for {self.instructor} "
             f"from {self.user} at {self.created_at}"
         )
+
+
+class PanelAdmin(models.Model):
+    """Model for panel admin objects."""
+
+    instructor = models.OneToOneField(
+        "User", on_delete=models.CASCADE, related_name="admin_panel"
+    )
+
+    def __str__(self):
+        return f"Admin Panel for {self.instructor.name}"
