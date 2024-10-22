@@ -6,7 +6,7 @@ from reportlab.pdfgen import canvas
 
 from datetime import timedelta
 
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from django.utils import timezone
@@ -34,12 +34,16 @@ from user.serializers import (
     SubscriptionSerializer,
     MessageSerializer,
     InstructorRatingSerializer,
+    PanelAdminSerializer,
 )
 from core.models import (
     UserProfile,
     Subscription,
     Message,
     InstructorRating,
+    PanelAdmin,
+    User,
+    Enrollment,
 )
 from user.utils import (
     check_balance,
@@ -336,3 +340,30 @@ class InstructorRatingViewSet(viewsets.ModelViewSet):
             instance, request.user, instructor_id
         )
         return super().destroy(request, *args, **kwargs)
+
+
+class PanelAdminView(APIView):
+    """View to return panel admin data."""
+
+    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    authentication_classes = [authentication.TokenAuthentication]
+
+    def get(self, request, user_id):
+        """Return data for admin panel."""
+        user = get_object_or_404(
+            User.objects.prefetch_related(
+                Prefetch(
+                    "subscription",
+                    queryset=Subscription.objects.filter(is_active=True),
+                ),
+                Prefetch(
+                    "enrollments",
+                    queryset=Enrollment.objects.select_related("session"),
+                ),
+            ),
+            id=user_id,
+        )
+        admin_panel = PanelAdmin.objects.get(instructor=user)
+        serializer = PanelAdminSerializer(admin_panel)
+
+        return Response(serializer.data)

@@ -50,5 +50,10 @@ urlpatterns = [
         ),
         name="instructor_ratings_detail",
     ),
+    path(
+        "user/<int:user_id>/panel_admin/",
+        views.PanelAdminView.as_view(),
+        name="panel_admin",
+    ),
     path("", include(router.urls)),
 ]

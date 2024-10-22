@@ -14,6 +14,8 @@ from core.models import (
     Subscription,
     Message,
     InstructorRating,
+    PanelAdmin,
+    MeditationSession,
 )
 
 
@@ -160,3 +162,48 @@ class InstructorRatingSerializer(serializers.ModelSerializer):
                 "Comment must have at least 6 characters."
             )
         return value
+
+
+class PanelAdminSerializer(serializers.ModelSerializer):
+    """Serializer for panel admin object."""
+
+    all_users = serializers.SerializerMethodField()
+    active_subscribers = serializers.SerializerMethodField()
+    all_sessions = serializers.SerializerMethodField()
+    instructor_sessions = serializers.SerializerMethodField()
+    participants_per_session = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PanelAdmin
+        fields = [
+            "all_users",
+            "active_subscribers",
+            "all_sessions",
+            "instructor_sessions",
+            "participants_per_session",
+        ]
+
+    def get_all_users(self, obj):
+        """Get all registered users."""
+        return get_user_model().objects.count()
+
+    def get_active_subscribers(self, obj):
+        """Get count of active subscribers."""
+        return Subscription.objects.filter(is_active=True).count()
+
+    def get_all_sessions(self, obj):
+        """Get count of all meditation sessions."""
+        return MeditationSession.objects.count()
+
+    def get_instructor_sessions(self, obj):
+        """Get count of sessions conducted by the logged-in instructor."""
+        return MeditationSession.objects.filter(
+            instructor=obj.instructor
+        ).count()
+
+    def get_participants_per_session(self, obj):
+        """Get list of sessions with the number of participants."""
+        sessions = MeditationSession.objects.filter(instructor=obj.instructor)
+        return {
+            session.name: session.enrollments.count() for session in sessions
+        }

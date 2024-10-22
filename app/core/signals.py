@@ -19,7 +19,7 @@ User = get_user_model()
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     """Create a user profile when a new user is created."""
-    if not instance.is_staff and created:
+    if created:
         UserProfile.objects.create(user=instance)
 
 
@@ -36,4 +36,3 @@ def create_panel_admin(sender, instance, created, **kwargs):
     """Create a panel admin when a new instructor is created."""
     if instance.is_staff and created:
         PanelAdmin.objects.create(instructor=instance)
-        print("PanelAdmin created for:", instance)

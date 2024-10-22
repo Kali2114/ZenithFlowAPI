@@ -15,7 +15,11 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.test import TestCase
 
-from core.models import UserProfile, MeditationSession, Enrollment
+from core.models import (
+    UserProfile,
+    MeditationSession,
+    Enrollment,
+)
 
 
 def create_user(**params):

@@ -238,7 +238,7 @@ class ModelTests(TestCase):
     def test_create_panel_admin(self):
         """Test creating panel admin for instructors successful."""
         instructor = create_instructor()
-        admin_panel = models.PanelAdmin.objects.create(instructor=instructor)
+        admin_panel = models.PanelAdmin.objects.get(instructor=instructor)
 
         self.assertEqual(
             str(admin_panel), f"Admin Panel for {instructor.name}"
