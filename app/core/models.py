@@ -18,6 +18,7 @@ from django.contrib.auth.models import (
 from django.utils import timezone
 
 from core import constants
+from core.utils import check_email_and_name
 
 
 def avatar_file_path(instance, filename):
@@ -33,10 +34,7 @@ class UserManager(BaseUserManager):
 
     def create_user(self, email, name, password=None, **kwargs):
         """Create, save and return a new user."""
-        if not email:
-            raise ValueError("Email is required.")
-        if not name:
-            raise ValueError("Name is required.")
+        check_email_and_name(email, name)
         user = self.model(
             email=self.normalize_email(email), name=name, **kwargs
         )
@@ -45,11 +43,16 @@ class UserManager(BaseUserManager):
 
         return user
 
-    def create_superuser(self, email, name, password):
+    def create_superuser(self, email, name, password=None, **kwargs):
         """Create, save and return a new superuser."""
-        user = self.create_user(email=email, name=name, password=password)
-        user.is_superuser = True
-        user.is_staff = True
+        check_email_and_name(email, name)
+        user = self.model(
+            email=self.normalize_email(email),
+            name=name,
+            is_superuser=True,
+            is_staff=True,
+        )
+        user.set_password(password)
         user.save(using=self._db)
 
         return user

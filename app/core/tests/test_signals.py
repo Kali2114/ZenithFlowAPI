@@ -4,7 +4,10 @@ Tests for signals.
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
-from core.models import UserProfile
+from core.models import (
+    UserProfile,
+    PanelAdmin,
+)
 
 
 class UserProfileSignalTests(TestCase):
@@ -26,3 +29,31 @@ class UserProfileSignalTests(TestCase):
         user.delete()
 
         self.assertFalse(UserProfile.objects.filter(user_id=user_id).exists())
+
+
+class PanelAdminSignalTest(TestCase):
+    """Test that the panel admin is created and deleted with instructor."""
+
+    def test_panel_admin_created_on_instructor_creation(self):
+        instructor = get_user_model().objects.create_superuser(
+            email="instructor@example.com",
+            password="testpass123",
+            name="Instructor",
+        )
+
+        self.assertTrue(
+            PanelAdmin.objects.filter(instructor=instructor).exists()
+        )
+
+    def test_panel_admin_deleted_on_instructor_deletion(self):
+        instructor = get_user_model().objects.create_superuser(
+            email="instructor@example.com",
+            password="testpass123",
+            name="Instructor",
+        )
+        instructor_id = instructor.id
+        instructor.delete()
+
+        self.assertFalse(
+            PanelAdmin.objects.filter(instructor_id=instructor_id).exists()
+        )
