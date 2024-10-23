@@ -95,6 +95,10 @@ Once the app is running, you can access the API at http://localhost:8000.
 * GET /user/<int:pk>/profile/ - View and edit the user's profile
 * PATCH /user/<int:pk>/profile/upload-avatar/ - Upload a profile avatar
 
+### Panel Admin:
+
+* GET /user/<int:user_id>/panel_admin/ - View panel admin with statistics.
+
 ### Meditation Sessions:
 
 * POST /meditations_session/sessions/ - Create a new session (instructor only)
